@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laughing at Parkour 系列 · 官方站</title>
+    <!-- Font Awesome 6 (免费) 用于图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts: 现代无衬线字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <button><a href="all_game.html" target="_blank">返回</a></button>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #c6e4ff 0%, #e0f0fa 100%);
+            color: #1a2b3c;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+  
+        /* 漂浮云朵装饰 (纯CSS) */
+        .cloud-decor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 80% 20% 70% 30% / 60% 40% 60% 40%;
+            filter: blur(6px);
+            opacity: 0.7;
+            box-shadow: 0 15px 25px rgba(255,255,240,0.3);
+        }
+        .cloud1 { width: 200px; height: 80px; top: 15%; left: 5%; }
+        .cloud2 { width: 280px; height: 100px; top: 45%; right: 0; }
+        .cloud3 { width: 160px; height: 70px; bottom: 15%; left: 20%; }
+        .cloud4 { width: 240px; height: 90px; top: 70%; right: 10%; }
+
+        /* 主内容容器 */
+        .wrapper {
+            position: relative;
+            z-index: 2;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            flex: 1;
+        }
+
+        /* 页头 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .logo-icon {
+            background: #1e2f3f;
+            color: #ffd966;
+            width: 48px;
+            height: 48px;
+            border-radius: 30% 70% 70% 30% / 30% 55% 45% 70%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transform: rotate(5deg);
+            box-shadow: 0 10px 10px rgba(0,0,0,0.1);
+        }
+        .logo-text h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #0e2a3a;
+            line-height: 1.2;
+        }
+        .logo-text span {
+            font-weight: 400;
+            font-size: 1rem;
+            color: #2c4c6e;
+            background: rgba(255,255,240,0.6);
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .download-badge {
+            background: #1e3b4f;
+            color: white;
+            padding: 0.75rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            box-shadow: 0 8px 0 #0b1f2b;
+            transition: 0.1s ease;
+            border: none;
+            cursor: default;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        .download-badge i {
+            color: #f9d875;
+        }
+
+        /* 主卡片区 */
+        .hero {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(6px);
+            border-radius: 40px 40px 40px 40px / 30px 30px 30px 30px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 20px 30px -10px rgba(0, 35, 55, 0.2);
+            border: 1px solid rgba(255,255,240,0.8);
+        }
+        .hero-content {
+            max-width: 70%;
+        }
+        .hero h2 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #123144;
+            line-height: 1.2;
+            margin-bottom: 0.8rem;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: #1d3b4f;
+            margin-bottom: 1.8rem;
+        }
+        .hero-btn {
+            background: #ffb54d;
+            color: #1e2f3f;
+            padding: 0.9rem 2.2rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid #fff2d2;
+            box-shadow: 0 6px 0 #b2761e;
+            transition: all 0.1s ease;
+        }
+        .hero-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px 0 #b2761e;
+            background: #ffc266;
+        }
+        .hero-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b2761e;
+        }
+
+        /* 系列卡片区域 */
+        .series-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 3rem 0 2rem;
+            color: #05222f;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .series-title i {
+            background: #345f73;
+            color: #f9e282;
+            padding: 10px;
+            border-radius: 50%;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 36px;
+            padding: 2rem 1.5rem 1.8rem;
+            box-shadow: 0 25px 35px -12px rgba(0,45,65,0.25);
+            transition: transform 0.2s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.7);
+            display: flex;
+            flex-direction: column;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 35px 40px -12px #0230474D;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .card-version {
+            background: #203e51;
+            color: white;
+            border-radius: 40px;
+            padding: 0.2rem 1.2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            color: #e68c2e;
+            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.1));
+        }
+        .game-card h3 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: #062d3d;
+        }
+        .game-card .sub {
+            color: #2a5775;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #b3d9f0;
+            padding-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-list {
+            list-style: none;
+            margin: 1.2rem 0 1.8rem;
+            flex-grow: 1;
+        }
+        .feature-list li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-weight: 450;
+        }
+        .feature-list i {
+            width: 24px;
+            color: #e07c2c;
+            font-size: 1.2rem;
+        }
+        .badge-light {
+            background: #f4e9d8;
+            color: #223e52;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* 统一的下载区块 */
+        .download-area {
+            background: linear-gradient(125deg, #123d52, #0e3142);
+            border-radius: 60px 60px 30px 30px;
+            padding: 3rem 2.5rem;
+            color: white;
+            margin: 4rem 0 3rem;
+            box-shadow: 0 30px 25px -10px #02141d;
+            border-bottom: 5px solid #ffbc6c;
+        }
+        .download-flex {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2.5rem;
+            justify-content: space-between;
+        }
+        .download-text h3 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .download-text p {
+            color: #c0deef;
+            max-width: 550px;
+            font-size: 1.1rem;
+        }
+        .download-btn {
+            background: #ffae3c;
+            color: #092734;
+            text-decoration: none;
+            padding: 1.2rem 3rem;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            border: 3px solid #ffdcaa;
+            box-shadow: 0 8px 0 #9e601d;
+            transition: all 0.15s;
+            letter-spacing: 1px;
+        }
+        .download-btn i {
+            font-size: 2rem;
+        }
+        .download-btn:hover {
+            background: #ffba5a;
+            transform: translateY(-5px);
+            box-shadow: 0 13px 0 #9e601d;
+        }
+        .download-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #9e601d;
+        }
+        .alipan-note {
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            border: 1px dashed #ffe2a3;
+            margin-top: 1.5rem;
+            display: inline-block;
+        }
+        .alipan-note i {
+            margin-right: 6px;
+            color: #ffd966;
+        }
+
+        /* 页脚 */
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: #234a5e;
+            border-top: 2px solid rgba(255,255,240,0.5);
+            padding: 2rem 0.5rem 1rem;
+            font-size: 0.95rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 80px 80px 0 0;
+        }
+        .footer a {
+            color: #1d4d6b;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .footer i {
+            color: #d47b28;
+        }
+
+        /* 小屏幕调整 */
+        @media (max-width: 700px) {
+            .hero-content { max-width: 100%; }
+            .hero h2 { font-size: 2rem; }
+            .header { flex-direction: column; align-items: start; }
+            .download-flex { flex-direction: column; align-items: start; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景装饰云 (静态) -->
+    <div class="cloud-decor">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+        <div class="cloud cloud4"></div>
+    </div>
+
+    <div class="wrapper">
+        <!-- 页眉区域 -->
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-person-running"></i></div>
+                <div class="logo-text">
+                    <h1>Laughing at Parkour</h1>
+                    <span>官方系列站 · 跑酷不止笑声不断</span>
+                </div>
+            </div>
+            <div class="download-badge">
+                <i class="fa-solid fa-cloud-sun"></i>
+                <span>三世代 经典回归</span>
+            </div>
+        </header>
+
+        <!-- 英雄区 简介 -->
+        <section class="hero">
+            <div class="hero-content">
+                <h2>跳跃 · 奔跑 · 超越</h2>
+                <p><i class="fa-regular fa-face-smile" style="color:#d17c28;"></i> 从初代纯朴到三代沉浸配乐，每一帧都充满欢笑。空格起跳，R键重来，简单而纯粹的跑酷乐趣。</p>
+                <a href="#games" class="hero-btn"><i class="fa-regular fa-eye"></i> 探索系列</a>
+            </div>
+        </section>
+
+        <!-- 系列游戏卡片 (三世代) -->
+        <div class="series-title" id="games">
+            <i class="fa-solid fa-cubes"></i>
+            <span>游戏版本 · 进化之路</span>
+        </div>
+        <div class="card-grid">
+            <!-- 一代 Game.py 基础版 -->
+            <div class="game-card">
+                <div class="card-header">
+                    <span class="card-version">初代·起源</span>
+                    <i class="fas fa-code card-icon"></i>
+                </div>
+                <h3>Laughing at Parkour</h3>
+                <div class="sub"><i class="fa-regular fa-gem"></i> 纯粹跑酷 · 1.0</div>
+                <ul class="feature-list">
+                    <li><i class="fa-regular fa-circle-check"></i> 经典重力  <span class="badge-light">GRAVITY 0.6</span></li>
+                    <li><i class="fa-regular fa-circle-check"></i> 红色障碍 · 速度5</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 地面碰撞 · 得分+10</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 极简配色，专注核心</li>
+                </ul>
+                <div style="font-size:0.9rem; background:#f8f2e5; border-radius:30px; padding:0.6rem; text-align:center; color:#1e4155;">
+                    <i class="fa-regular fa-file-lines"></i> Game.py · 原始质感
+                </div>
+            </div>
+
+            <!-- 二代 ALG2.py 图片背景/云/太阳 -->
+            <div class="game-card">
+                <div class="card-header">
+                    <span class="card-version">二代·视觉新生</span>
+                    <i class="fas fa-cloud-sun card-icon"></i>
+                </div>
+                <h3>Laughing at Parkour 2</h3>
+                <div class="sub"><i class="fa-regular fa-image"></i> 背景画卷 · 2.0</div>
+                <ul class="feature-list">
+                    <li><i class="fa-regular fa-circle-check"></i> 天空/地面/云朵实图</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 飘动的云 <span class="badge-light">CLOUD_SPEED 1</span></li>
+                    <li><i class="fa-regular fa-circle-check"></i> 太阳/月亮 (osky) 点缀</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 开始画面 · 静态云装饰</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 跑步动画 (两帧循环)</li>
+                </ul>
+                <div style="font-size:0.9rem; background:#f8f2e5; border-radius:30px; padding:0.6rem; text-align:center; color:#1e4155;">
+                    <i class="fa-regular fa-file-lines"></i> ALG2.py + 素材
+                </div>
+            </div>
+
+            <!-- 三代 ALG3.py 音乐版 -->
+            <div class="game-card">
+                <div class="card-header">
+                    <span class="card-version">三代·声动跑酷</span>
+                    <i class="fas fa-music card-icon"></i>
+                </div>
+                <h3>Laughing at Parkour 3</h3>
+                <div class="sub"><i class="fa-regular fa-head-side"></i> 沉浸配乐 · 3.0</div>
+                <ul class="feature-list">
+                    <li><i class="fa-regular fa-circle-check"></i> 背景音乐循环 <span class="badge-light">Music.mp3</span></li>
+                    <li><i class="fa-regular fa-circle-check"></i> 继承二代所有视觉元素</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 混音器初始化 · 音量控制</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 稳定60帧，跳跃更丝滑</li>
+                    <li><i class="fa-regular fa-circle-check"></i> 全系列最完整体验</li>
+                </ul>
+                <div style="font-size:0.9rem; background:#f8f2e5; border-radius:30px; padding:0.6rem; text-align:center; color:#1e4155;">
+                    <i class="fa-regular fa-file-lines"></i> ALG3.py · 带BGM
+                </div>
+            </div>
+        </div>
+
+        <!-- 统一的下载区块 (阿里云盘链接) -->
+        <div class="download-area">
+            <div class="download-flex">
+                <div class="download-text">
+                    <h3><i class="fa-regular fa-circle-down"></i> 全系列打包下载</h3>
+                    <p>一代至三代完整游戏文件 + 素材资源 (image/ 目录) 。<br>点击按钮前往阿里云盘，提取码已在链接内。</p>
+                    <div class="alipan-note">
+                        <i class="fa-regular fa-link"></i> 阿里云盘分享 · 长期有效
+                    </div>
+                </div>
+                <a href="https://www.alipan.com/s/9utddgEUaeg" target="_blank" class="download-btn">
+                    <i class="fa-brands fa-alipay"></i> 进入云盘
+                </a>
+            </div>
+            <div style="margin-top: 2rem; display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.95rem;">
+                <span><i class="fa-regular fa-circle-check" style="color: #b1e6b1;"></i> 内含: Game.py (初代) </span>
+                <span><i class="fa-regular fa-circle-check" style="color: #b1e6b1;"></i> ALG2.py + /image/ </span>
+                <span><i class="fa-regular fa-circle-check" style="color: #b1e6b1;"></i> ALG3.py + 背景音乐 </span>
+                <span><i class="fa-regular fa-circle-check" style="color: #b1e6b1;"></i> 全部素材结构</span>
+            </div>
+            <div style="background:#0d2b38; border-radius:30px; padding:0.5rem 1.2rem; margin-top: 1.8rem; color:#9ec7db; display: inline-block;">
+                <i class="fa-regular fa-key"></i> 链接：https://www.alipan.com/s/9utddgEUaeg  (直接打开)
+            </div>
+        </div>
+
+        <!-- 小特点 / 操作说明 -->
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0 1rem;">
+            <div style="background: #eaf4fb; border-radius: 60px; padding: 0.8rem 1.8rem; font-weight: 500;"><i class="fa-regular fa-space-station" style="margin-right: 8px;"></i> 空格跳跃 · R重试</div>
+            <div style="background: #eaf4fb; border-radius: 60px; padding: 0.8rem 1.8rem; font-weight: 500;"><i class="fa-regular fa-clock"></i> 障碍间隔 2000ms · 速度5</div>
+            <div style="background: #eaf4fb; border-radius: 60px; padding: 0.8rem 1.8rem; font-weight: 500;"><i class="fa-regular fa-star"></i> 得分+10 / 越过障碍</div>
+        </div>
+
+        <!-- 简单的footer -->
+        <footer class="footer">
+            <p><i class="fa-regular fa-copyright"></i> 2026 Laughing at Parkour 非官方粉丝站 · 游戏源码及素材归原作者所有 <br>
+            <span style="opacity: 0.8;"><i class="fa-regular fa-memo"></i> 基于 Pygame 构建，三世代持续欢笑 | 提取码自动生效 </span></p>
+            <p style="margin-top: 1rem;">
+                <a href="#"><i class="fa-brands fa-github"></i> GitHub</a> · 
+                <a href="#"><i class="fa-regular fa-envelope"></i> 联系</a> · 
+                <span><i class="fa-regular fa-cloud"></i> 云端存档</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- 简单悬停平滑效果 (无需js, 但加上控制台友好) -->
+    <script>
+        (function() {
+            // 控制台欢迎语
+            console.log("欢迎来到 Laughing at Parkour 官网！ 下载链接已准备就绪。");
+        })();
+    </script>
+</body>
+</html>

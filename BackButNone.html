@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back But None · STDE Studio</title>
+    <button><a href="all_game.html" target="_blank">返回</a></button>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a1a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        /* 极简滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e4f8a;
+            border-radius: 3px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* 导航 */
+        .navbar {
+            padding: 30px 0 20px;
+            border-bottom: 1px solid rgba(30, 144, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo a {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            text-decoration: none;
+        }
+
+        .logo .blue {
+            color: #1e90ff;
+        }
+
+        .logo .white {
+            color: #ffffff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+        }
+
+        .nav-links a {
+            color: #ccddee;
+            text-decoration: none;
+            font-weight: 400;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #1e90ff;
+        }
+
+        /* 按钮风格 */
+        .btn {
+            display: inline-block;
+            background-color: #1e90ff;
+            color: #0a0a1a;
+            font-weight: 600;
+            padding: 14px 42px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 15px rgba(30, 144, 255, 0.3);
+        }
+
+        .btn:hover {
+            background-color: #3aa0ff;
+            transform: scale(1.02);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #1e90ff;
+            color: #1e90ff;
+            box-shadow: none;
+            padding: 12px 32px;
+        }
+
+        .btn-outline:hover {
+            background: rgba(30, 144, 255, 0.1);
+            color: #ffffff;
+        }
+
+        /* HERO 部分 */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+            border-bottom: 1px solid rgba(30, 144, 255, 0.1);
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .hero h1 span.blue {
+            color: #1e90ff;
+        }
+
+        .hero .subhead {
+            font-size: 1.5rem;
+            color: #aabbdd;
+            margin: 24px 0 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 300;
+        }
+
+        .hero-note {
+            color: #3f5f8f;
+            font-size: 0.95rem;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        /* 引言区块 */
+        .philosophy {
+            padding: 80px 0;
+            background: linear-gradient(180deg, #0a0a1a 0%, #0c0c24 100%);
+            border-bottom: 1px solid rgba(30, 144, 255, 0.1);
+        }
+
+        .philosophy-text {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.3rem;
+            text-align: center;
+            color: #d0e0ff;
+            font-weight: 300;
+            line-height: 1.8;
+        }
+
+        .philosophy-text .quote {
+            font-size: 2rem;
+            color: #1e90ff;
+            opacity: 0.6;
+        }
+
+        /* 版本卡片区 */
+        .versions {
+            padding: 90px 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .section-title span {
+            color: #1e90ff;
+        }
+
+        .section-desc {
+            color: #99aacc;
+            max-width: 600px;
+            margin-bottom: 60px;
+            font-size: 1.2rem;
+        }
+
+        .version-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+        }
+
+        .version-card {
+            background: rgba(20, 30, 50, 0.5);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(30, 144, 255, 0.15);
+            border-radius: 24px;
+            padding: 32px 20px;
+            transition: border-color 0.2s, transform 0.2s;
+            text-align: center;
+        }
+
+        .version-card:hover {
+            border-color: #1e90ff;
+            transform: translateY(-6px);
+        }
+
+        .version-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1e90ff;
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+
+        .version-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .version-card p {
+            color: #aabbdd;
+            font-size: 0.95rem;
+        }
+
+        /* 下载/CTA部分 */
+        .download {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .download h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .download .password-note {
+            color: #88aadd;
+            font-size: 1.1rem;
+            margin: 10px 0 30px;
+            background: rgba(30, 144, 255, 0.1);
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 40px;
+            border: 1px solid #1e90ff;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        /* 页脚 */
+        .footer {
+            padding: 40px 0;
+            border-top: 1px solid rgba(30, 144, 255, 0.1);
+            color: #5577aa;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #88aadd;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #1e90ff;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 700px) {
+            .hero h1 {
+                font-size: 3.5rem;
+            }
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .nav-links {
+                gap: 20px;
+            }
+        }
+
+        /* 模拟游戏背景的微纹理 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 30% 40%, rgba(20, 50, 100, 0.15) 0%, transparent 50%),
+                        repeating-linear-gradient(45deg, rgba(30,144,255,0.01) 0px, rgba(30,144,255,0.01) 2px, transparent 2px, transparent 6px);
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 (移除工作室链接) -->
+        <nav class="navbar">
+            <div class="logo">
+                <a href="#"><span class="blue">Back</span><span class="white">ButNone</span></a>
+            </div>
+            <div class="nav-links">
+                <a href="#versions">Series</a>
+                <a href="#download">Download</a>
+                <a href="#footer">Contact</a>
+            </div>
+        </nav>
+
+        <!-- Hero 主视觉 -->
+        <section class="hero">
+            <h1>
+                <span class="blue">Back</span> But <span class="blue">None</span>
+            </h1>
+            <div class="subhead">
+                A minimalist journey about solitude and patience.<br>You can't even see yourself — only deep blue and the keys.
+            </div>
+            <a href="#download" class="btn">Begin the journey</a>
+            <div class="hero-note">
+                * takes several hours · no guidance · only buttons and time
+            </div>
+        </section>
+
+        <!-- 哲学/概念陈述 -->
+        <section class="philosophy">
+            <div class="philosophy-text">
+                <span class="quote">“</span> In an endless deep blue, you have to return to the origin. No markers, no feedback, not even yourself. Only the touch of keys and the passing time. Do you believe you are moving? Do you believe the origin exists? <span class="quote">”</span>
+            </div>
+        </section>
+
+        <!-- 系列版本 (id="versions") -->
+        <section class="versions" id="versions">
+            <h2 class="section-title"><span>///</span> Series evolution</h2>
+            <div class="section-desc">
+                From visible to invisible, from information to nothingness. Five versions, gradually stripped down to pure concept.
+            </div>
+            <div class="version-grid">
+                <div class="version-card">
+                    <div class="version-number">1</div>
+                    <h3>Origin visible</h3>
+                    <p>Coordinates, distance, timer displayed. You know where you are and where to go. But movement is extremely slow — a journey of several hours.</p>
+                </div>
+                <div class="version-card">
+                    <div class="version-number">2</div>
+                    <h3>Origin disappears</h3>
+                    <p>The visual marker of the origin is removed, but UI remains. You can only sense proximity via numbers, never see the goal.</p>
+                </div>
+                <div class="version-card">
+                    <div class="version-number">3</div>
+                    <h3>UI fades</h3>
+                    <p>Only yourself remains — a tiny blue dot on deep blue background. No position, no distance, only the sensation of movement.</p>
+                </div>
+                <div class="version-card">
+                    <div class="version-number">4</div>
+                    <h3>Total unknown</h3>
+                    <p>Even your own avatar vanishes. Pure deep blue screen, nothing drawn. You press blindly, trusting that you are moving.</p>
+                </div>
+                <div class="version-card">
+                    <div class="version-number">5</div>
+                    <h3>Edge awareness</h3>
+                    <p>Screen-boundary mechanism: moving within a limited area pushes the "map". Still no visual feedback, but spatial sense builds in the mind.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 下载 / 游玩 (id="download") 更新为蓝奏云链接+密码 -->
+        <section class="download" id="download">
+            <h2 class="section-title"><span>///</span> Begin your slow return</h2>
+            <p style="color:#aabbdd; max-width: 600px; margin: 20px auto;">
+                All versions are free to download. No installation required — double-click and play. Version 5 is recommended for first experience: it’s closest to the essence of “unknown”.
+            </p>
+            <div class="password-note">
+                🔐 提取密码: <strong>enr8</strong>
+            </div>
+            <div class="download-buttons">
+                <!-- 蓝奏云文件夹链接，包含全部版本 -->
+                <a href="https://wwaoy.lanzoue.com/b0188679lc" target="_blank" class="btn">Download All Versions (Windows)</a>
+                <!-- 如果需要其他平台，可以保留，但都指向同一说明；也可去掉，这里保留两个备用但无实际链接 -->
+                <a href="https://wwaoy.lanzoue.com/b0188679lc" target="_blank" class="btn btn-outline">macOS (same link)</a>
+                <a href="https://wwaoy.lanzoue.com/b0188679lc" target="_blank" class="btn btn-outline">Linux (same link)</a>
+            </div>
+            <p style="margin-top: 40px; color: #3f5f8f; font-size: 0.9rem;">
+                or <a href="https://wwaoy.lanzoue.com/b0188679lc" target="_blank" style="color: #1e90ff;">visit the Lanzous cloud folder</a> · password: enr8
+            </p>
+        </section>
+
+        <!-- 页脚 (id="footer") 移除了中文名称，只保留STDE Studio -->
+        <footer class="footer" id="footer">
+            <div>© 2025 STDE Studio · All rights reserved</div>
+            <div class="footer-links">
+                <a href="#">Twitter</a>
+                <a href="#">itch.io</a>
+                <a href="#">GitHub</a>
+                <a href="mailto:studio@stde.xyz">Contact</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 极简交互：按下方向键或WASD时背景微闪 -->
+    <script>
+        (function() {
+            document.addEventListener('keydown', function(e) {
+                if (e.key.startsWith('Arrow') || ['w','a','s','d'].includes(e.key.toLowerCase())) {
+                    document.body.style.backgroundColor = '#0c0c2a';
+                    setTimeout(() => {
+                        document.body.style.backgroundColor = '#0a0a1a';
+                    }, 150);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
