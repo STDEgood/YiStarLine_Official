@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>UselessOS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a12;
+            font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            position: fixed;
+            top: 0;
+            left: 0;
+            touch-action: none;
+        }
+
+        /* ===== PC 遮罩 ===== */
+        #pcOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 18, 0.97);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 40px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        #pcOverlay.hidden {
+            display: none;
+        }
+        #pcOverlay .logo {
+            font-size: 72px;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+        #pcOverlay h1 {
+            color: #a78bfa;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 40px rgba(167, 139, 250, 0.3);
+        }
+        #pcOverlay p {
+            color: #8888aa;
+            font-size: 18px;
+            line-height: 1.8;
+            max-width: 360px;
+        }
+        #pcOverlay .emoji-row {
+            font-size: 40px;
+            letter-spacing: 12px;
+            margin: 16px 0;
+        }
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+
+        /* ===== UselessOS 容器 ===== */
+        #osContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: #0a0a12;
+            touch-action: none;
+        }
+
+        /* ===== 动态壁纸 ===== */
+        #wallpaper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(ellipse at 20% 30%, #1a1040, #0a0a12 60%, #050510);
+            overflow: hidden;
+        }
+        #wallpaper .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite alternate;
+        }
+        #wallpaper .orb:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -50px;
+            left: -80px;
+            background: #7c3aed;
+            animation-duration: 18s;
+        }
+        #wallpaper .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            right: -120px;
+            background: #2563eb;
+            animation-duration: 25s;
+            animation-delay: -5s;
+        }
+        #wallpaper .orb:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            top: 40%;
+            left: 60%;
+            background: #8b5cf6;
+            animation-duration: 22s;
+            animation-delay: -10s;
+            opacity: 0.25;
+        }
+        #wallpaper .orb:nth-child(4) {
+            width: 180px;
+            height: 180px;
+            top: 70%;
+            left: 10%;
+            background: #06b6d4;
+            animation-duration: 16s;
+            animation-delay: -3s;
+            opacity: 0.2;
+        }
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(40px, -30px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 40px) scale(0.9);
+            }
+            100% {
+                transform: translate(30px, 20px) scale(1.05);
+            }
+        }
+
+        /* ===== 状态栏 ===== */
+        #statusBar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 12px 20px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 600;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            pointer-events: none;
+        }
+        #statusBar .time {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        #statusBar .status-icons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+        }
+        #statusBar .status-icons .battery {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #statusBar .status-icons .battery .level {
+            font-size: 13px;
+        }
+        #statusBar .status-icons .battery .icon {
+            font-size: 18px;
+        }
+
+        /* ===== 桌面 ===== */
+        #desktop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            padding: 64px 16px 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+        }
+
+        /* 桌面图标网格 */
+        #desktopIcons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px 12px;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 8px 4px;
+        }
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 4px 8px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            min-height: 80px;
+        }
+        .desktop-icon:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .desktop-icon .icon-emoji {
+            font-size: 40px;
+            line-height: 1.2;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+        }
+        .desktop-icon .icon-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            letter-spacing: 0.3px;
+            max-width: 64px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ===== Dock ===== */
+        #dock {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            touch-action: none;
+        }
+        .dock-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 30px;
+            background: transparent;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            min-width: 52px;
+            min-height: 52px;
+        }
+        .dock-icon:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .dock-icon .icon-emoji {
+            font-size: 28px;
+            line-height: 1.2;
+        }
+        .dock-icon .icon-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            margin-top: 1px;
+            letter-spacing: 0.2px;
+        }
+
+        /* ===== 窗口系统 ===== */
+        .window {
+            position: absolute;
+            z-index: 50;
+            border-radius: 24px;
+            background: rgba(20, 20, 40, 0.88);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.02);
+            display: none;
+            flex-direction: column;
+            min-width: 280px;
+            min-height: 200px;
+            max-width: 92vw;
+            max-height: 82vh;
+            touch-action: none;
+            transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
+            transform: scale(0.92) translateY(20px);
+            overflow: hidden;
+        }
+        .window.active {
+            display: flex;
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+        .window.dragging {
+            transition: none;
+            opacity: 0.95;
+            transform: scale(1.02);
+            z-index: 200;
+        }
+        .window .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px 10px 20px;
+            flex-shrink: 0;
+            touch-action: none;
+            cursor: grab;
+        }
+        .window .window-header:active {
+            cursor: grabbing;
+        }
+        .window .window-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .window .window-title .app-icon {
+            font-size: 20px;
+        }
+        .window .window-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            padding: 0;
+        }
+        .window .window-close:active {
+            background: rgba(255, 70, 70, 0.3);
+            color: #ff6b6b;
+            transform: scale(0.88);
+        }
+        .window .window-body {
+            flex: 1;
+            padding: 8px 18px 18px;
+            overflow-y: auto;
+            color: rgba(255, 255, 255, 0.85);
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        .window .window-body::-webkit-scrollbar {
+            width: 3px;
+        }
+        .window .window-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        /* ===== 应用样式 ===== */
+        /* 计算器 */
+        .calc-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            text-align: right;
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .calc-display .result {
+            color: #a78bfa;
+            font-size: 38px;
+        }
+        .calc-display .input {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 22px;
+            margin-right: 12px;
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-buttons button {
+            padding: 14px 0;
+            border: none;
+            border-radius: 14px;
+            font-size: 20px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            touch-action: manipulation;
+        }
+        .calc-buttons button:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .calc-buttons button.btn-equal {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .calc-buttons button.btn-equal:active {
+            background: #6d28d9;
+        }
+        .calc-buttons button.btn-clear {
+            background: rgba(255, 70, 70, 0.15);
+            color: #ff6b6b;
+        }
+        .calc-buttons button.btn-clear:active {
+            background: rgba(255, 70, 70, 0.25);
+        }
+        .calc-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 时钟 */
+        .clock-display {
+            text-align: center;
+            padding: 20px 0 12px;
+        }
+        .clock-display .time-big {
+            font-size: 56px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 4px;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 40px rgba(167, 139, 250, 0.15);
+        }
+        .clock-display .time-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.25);
+            margin-top: 4px;
+            letter-spacing: 4px;
+        }
+        .clock-status {
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* 笔记 */
+        .notes-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+            touch-action: pan-y;
+        }
+        .notes-textarea:focus {
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+        .notes-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+        .notes-output {
+            margin-top: 12px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.15);
+            min-height: 48px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            word-break: break-all;
+            border: 1px dashed rgba(255, 255, 255, 0.04);
+        }
+        .notes-output .label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.2);
+            display: block;
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        /* 音乐 */
+        .music-player {
+            text-align: center;
+            padding: 12px 0;
+        }
+        .music-player .album-art {
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.2);
+        }
+        .music-player .track-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .music-player .track-artist {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 2px;
+        }
+        .music-player .progress-bar {
+            margin: 16px 0 12px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .music-player .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #7c3aed, #a78bfa);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .music-player .controls {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 8px;
+        }
+        .music-player .controls button {
+            background: none;
+            border: none;
+            font-size: 32px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            padding: 4px 8px;
+        }
+        .music-player .controls button:active {
+            transform: scale(0.85);
+            color: #a78bfa;
+        }
+        .music-player .controls button.play-btn {
+            font-size: 44px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .music-player .status-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.2);
+            margin-top: 12px;
+        }
+
+        /* 天气 */
+        .weather-display {
+            text-align: center;
+            padding: 8px 0;
+        }
+        .weather-display .weather-icon {
+            font-size: 72px;
+            margin-bottom: 4px;
+            animation: weatherPulse 4s ease-in-out infinite;
+        }
+        @keyframes weatherPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        .weather-display .weather-temp {
+            font-size: 48px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .weather-display .weather-desc {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+            letter-spacing: 2px;
+        }
+        .weather-display .weather-detail {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.2);
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+        .weather-display .weather-detail span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 设置 */
+        .settings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 4px 0;
+        }
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .settings-item .label {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .settings-item .label .sub {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.2);
+            display: block;
+            margin-top: 1px;
+        }
+        .settings-toggle {
+            width: 50px;
+            height: 30px;
+            border-radius: 30px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .settings-toggle:active {
+            transform: scale(0.92);
+        }
+        .settings-toggle .thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .settings-toggle.active {
+            background: rgba(124, 58, 237, 0.5);
+        }
+        .settings-toggle.active .thumb {
+            left: 23px;
+            background: #a78bfa;
+        }
+        .settings-hint {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.15);
+            margin-top: 16px;
+            padding: 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* 相册 */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .gallery-grid .art-item {
+            aspect-ratio: 1;
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            position: relative;
+        }
+        .gallery-grid .art-item:active {
+            transform: scale(0.94);
+        }
+        .gallery-grid .art-item canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .gallery-grid .art-item .art-emoji {
+            position: absolute;
+            font-size: 32px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .gallery-hint {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.15);
+            margin-top: 12px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 420px) {
+            #desktopIcons {
+                gap: 12px 8px;
+                max-width: 100%;
+                padding: 4px 2px;
+            }
+            .desktop-icon {
+                min-height: 64px;
+                padding: 8px 2px 4px;
+                border-radius: 16px;
+            }
+            .desktop-icon .icon-emoji {
+                font-size: 32px;
+            }
+            .desktop-icon .icon-label {
+                font-size: 10px;
+                max-width: 50px;
+            }
+            #dock {
+                padding: 8px 12px;
+                gap: 4px;
+                bottom: 14px;
+                border-radius: 32px;
+            }
+            .dock-icon {
+                min-width: 44px;
+                min-height: 44px;
+                padding: 4px 8px;
+            }
+            .dock-icon .icon-emoji {
+                font-size: 22px;
+            }
+            .dock-icon .icon-label {
+                font-size: 8px;
+            }
+            #statusBar {
+                padding: 10px 14px 6px;
+                font-size: 12px;
+            }
+            #statusBar .time {
+                font-size: 14px;
+            }
+            .window {
+                min-width: 200px;
+                min-height: 160px;
+                max-width: 96vw;
+                max-height: 80vh;
+                border-radius: 20px;
+            }
+            .window .window-header {
+                padding: 10px 12px 6px 16px;
+            }
+            .window .window-title {
+                font-size: 14px;
+            }
+            .window .window-body {
+                padding: 4px 12px 14px;
+            }
+            .calc-display {
+                font-size: 24px;
+                padding: 12px 16px;
+                min-height: 50px;
+            }
+            .calc-display .result {
+                font-size: 30px;
+            }
+            .calc-buttons button {
+                padding: 10px 0;
+                font-size: 16px;
+            }
+            .clock-display .time-big {
+                font-size: 40px;
+            }
+            .music-player .album-art {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+            }
+            .weather-display .weather-icon {
+                font-size: 52px;
+            }
+            .weather-display .weather-temp {
+                font-size: 36px;
+            }
+            .settings-item {
+                padding: 10px 12px;
+            }
+            .settings-item .label {
+                font-size: 13px;
+            }
+            .gallery-grid {
+                gap: 6px;
+            }
+        }
+
+        @media (max-height: 640px) {
+            #desktop {
+                padding: 56px 12px 80px;
+            }
+            .desktop-icon {
+                min-height: 56px;
+                padding: 6px 2px 4px;
+            }
+            .desktop-icon .icon-emoji {
+                font-size: 28px;
+            }
+            #dock {
+                padding: 6px 10px;
+                bottom: 10px;
+            }
+            .dock-icon {
+                min-width: 38px;
+                min-height: 38px;
+                padding: 2px 6px;
+            }
+            .dock-icon .icon-emoji {
+                font-size: 18px;
+            }
+            #statusBar {
+                padding: 6px 12px 4px;
+                font-size: 11px;
+            }
+            #statusBar .time {
+                font-size: 12px;
+            }
+        }
+
+        /* 安全区域 */
+        @supports (padding: max(0px)) {
+            #statusBar {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-top: max(12px, env(safe-area-inset-top));
+            }
+            #dock {
+                bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* ===== 无用的加载动画 ===== */
+        .useless-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 1.2s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 关于本机弹窗 */
+        .about-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+        }
+        .about-overlay.active {
+            display: flex;
+        }
+        .about-box {
+            background: rgba(20, 20, 40, 0.92);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border-radius: 32px;
+            padding: 36px 32px 28px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+            transform: scale(0.92);
+            animation: aboutIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes aboutIn {
+            to {
+                transform: scale(1);
+            }
+        }
+        .about-box .logo {
+            font-size: 64px;
+            margin-bottom: 8px;
+        }
+        .about-box h2 {
+            color: #a78bfa;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+        .about-box .version {
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            margin-top: 2px;
+            letter-spacing: 3px;
+        }
+        .about-box .desc {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 16px 0 20px;
+        }
+        .about-box .close-btn {
+            padding: 12px 40px;
+            border: none;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+        .about-box .close-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .about-box .useless-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin: 12px 0 16px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.2);
+        }
+        .about-box .useless-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== PC 遮罩 ===== -->
+    <div id="pcOverlay">
+        <div class="logo">🚫</div>
+        <h1>UselessOS</h1>
+        <p>这是一个 <strong>仅限手机</strong> 的无用操作系统</p>
+        <p style="font-size:15px; color:#667; margin-top:4px;">请用手机打开，体验真正的「无用」</p>
+        <div class="emoji-row">📱 🤖 🎭</div>
+    </div>
+
+    <!-- ===== UselessOS ===== -->
+    <div id="osContainer">
+        <!-- 壁纸 -->
+        <div id="wallpaper">
+            <div class="orb"></div>
+            <div class="orb"></div>
+            <div class="orb"></div>
+            <div class="orb"></div>
+        </div>
+
+        <!-- 状态栏 -->
+        <div id="statusBar">
+            <span class="time" id="statusTime">00:00</span>
+            <div class="status-icons">
+                <span>📶</span>
+                <span class="battery">
+                    <span class="icon">🔋</span>
+                    <span class="level" id="batteryLevel">∞</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- 桌面 -->
+        <div id="desktop">
+            <div id="desktopIcons">
+                <!-- 由 JS 渲染 -->
+            </div>
+        </div>
+
+        <!-- Dock -->
+        <div id="dock">
+            <!-- 由 JS 渲染 -->
+        </div>
+
+        <!-- 窗口容器 -->
+        <div id="windowContainer" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+            <!-- 窗口由 JS 动态创建 -->
+        </div>
+
+        <!-- 关于本机弹窗 -->
+        <div class="about-overlay" id="aboutOverlay">
+            <div class="about-box">
+                <div class="logo">🤖</div>
+                <h2>UselessOS</h2>
+                <div class="version">版本 0.0.1 · 无用版</div>
+                <div class="desc">
+                    一个精心设计的「无用」操作系统。<br>
+                    所有功能均经过严格测试，确保<strong>毫无用处</strong>。
+                </div>
+                <div class="useless-stats">
+                    <span>🧠 无用指数 99.9%</span>
+                    <span>⚡ 耗电 100%</span>
+                </div>
+                <button class="close-btn" id="aboutCloseBtn">好的，很无用</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            //  检测触摸设备
+            // ============================================================
+            const isTouch = ('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (navigator.msMaxTouchPoints > 0);
+
+            const pcOverlay = document.getElementById('pcOverlay');
+            if (!isTouch) {
+                pcOverlay.classList.remove('hidden');
+                return;
+            } else {
+                pcOverlay.classList.add('hidden');
+            }
+
+            // ============================================================
+            //  应用定义
+            // ============================================================
+            const APP_DEFS = {
+                calc: {
+                    id: 'calc',
+                    name: '计算器',
+                    icon: '🧮',
+                    color: '#f59e0b',
+                    desc: '任何计算都等于 42'
+                },
+                clock: {
+                    id: 'clock',
+                    name: '时钟',
+                    icon: '🕐',
+                    color: '#3b82f6',
+                    desc: '时间走得忽快忽慢'
+                },
+                notes: {
+                    id: 'notes',
+                    name: '笔记',
+                    icon: '📝',
+                    color: '#10b981',
+                    desc: '文字自动反转'
+                },
+                music: {
+                    id: 'music',
+                    name: '音乐',
+                    icon: '🎵',
+                    color: '#8b5cf6',
+                    desc: '播放无声之歌'
+                },
+                weather: {
+                    id: 'weather',
+                    name: '天气',
+                    icon: '🌤️',
+                    color: '#06b6d4',
+                    desc: '永远显示「无用」'
+                },
+                settings: {
+                    id: 'settings',
+                    name: '设置',
+                    icon: '⚙️',
+                    color: '#ec4899',
+                    desc: '所有开关反向工作'
+                },
+                gallery: {
+                    id: 'gallery',
+                    name: '相册',
+                    icon: '🖼️',
+                    color: '#f472b6',
+                    desc: '随机抽象艺术'
+                }
+            };
+
+            const DESKTOP_APPS = ['calc', 'clock', 'notes', 'music'];
+            const DOCK_APPS = ['weather', 'settings', 'gallery', 'about'];
+
+            // ============================================================
+            //  状态
+            // ============================================================
+            let windows = {}; // id -> { element, data, open }
+            let windowZIndex = 50;
+            let dragData = null; // { id, startX, startY, origX, origY, element }
+            let aboutOpen = false;
+
+            // ============================================================
+            //  DOM 引用
+            // ============================================================
+            const desktopIcons = document.getElementById('desktopIcons');
+            const dockEl = document.getElementById('dock');
+            const windowContainer = document.getElementById('windowContainer');
+            const statusTime = document.getElementById('statusTime');
+            const batteryLevel = document.getElementById('batteryLevel');
+            const aboutOverlay = document.getElementById('aboutOverlay');
+            const aboutCloseBtn = document.getElementById('aboutCloseBtn');
+
+            // ============================================================
+            //  工具
+            // ============================================================
+            function rand(min, max) { return Math.random() * (max - min) + min; }
+
+            function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+            function shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = randInt(0, i);
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            // ============================================================
+            //  渲染桌面图标
+            // ============================================================
+            function renderDesktop() {
+                desktopIcons.innerHTML = '';
+                DESKTOP_APPS.forEach(id => {
+                    const app = APP_DEFS[id];
+                    if (!app) return;
+                    const div = document.createElement('div');
+                    div.className = 'desktop-icon';
+                    div.dataset.app = id;
+                    div.innerHTML = `
+                        <span class="icon-emoji">${app.icon}</span>
+                        <span class="icon-label">${app.name}</span>
+                    `;
+                    div.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        openApp(id);
+                    });
+                    div.addEventListener('mousedown', (e) => e.preventDefault());
+                    desktopIcons.appendChild(div);
+                });
+            }
+
+            function renderDock() {
+                dockEl.innerHTML = '';
+                DOCK_APPS.forEach(id => {
+                    if (id === 'about') {
+                        const div = document.createElement('div');
+                        div.className = 'dock-icon';
+                        div.innerHTML = `
+                            <span class="icon-emoji">ℹ️</span>
+                            <span class="icon-label">关于</span>
+                        `;
+                        div.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            openAbout();
+                        });
+                        div.addEventListener('mousedown', (e) => e.preventDefault());
+                        dockEl.appendChild(div);
+                        return;
+                    }
+                    const app = APP_DEFS[id];
+                    if (!app) return;
+                    const div = document.createElement('div');
+                    div.className = 'dock-icon';
+                    div.dataset.app = id;
+                    div.innerHTML = `
+                        <span class="icon-emoji">${app.icon}</span>
+                        <span class="icon-label">${app.name}</span>
+                    `;
+                    div.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        openApp(id);
+                    });
+                    div.addEventListener('mousedown', (e) => e.preventDefault());
+                    dockEl.appendChild(div);
+                });
+            }
+
+            // ============================================================
+            //  窗口系统
+            // ============================================================
+            function createWindow(appId) {
+                const app = APP_DEFS[appId];
+                if (!app) return null;
+
+                // 如果已存在且打开，聚焦并返回
+                if (windows[appId] && windows[appId].open) {
+                    focusWindow(appId);
+                    return windows[appId].element;
+                }
+
+                // 如果存在但未打开，复用
+                let el;
+                if (windows[appId]) {
+                    el = windows[appId].element;
+                    windows[appId].open = true;
+                    el.classList.add('active');
+                    el.style.display = 'flex';
+                    focusWindow(appId);
+                    return el;
+                }
+
+                // 创建新窗口
+                el = document.createElement('div');
+                el.className = 'window';
+                el.dataset.app = appId;
+                el.style.width = 'min(88vw, 400px)';
+                el.style.height = 'min(72vh, 500px)';
+                el.style.left = '50%';
+                el.style.top = '50%';
+                el.style.transform = 'translate(-50%, -50%) scale(0.92)';
+                el.style.pointerEvents = 'auto';
+
+                // 标题栏
+                const header = document.createElement('div');
+                header.className = 'window-header';
+                header.innerHTML = `
+                    <span class="window-title">
+                        <span class="app-icon">${app.icon}</span>
+                        ${app.name}
+                    </span>
+                    <button class="window-close" data-app="${appId}">✕</button>
+                `;
+                el.appendChild(header);
+
+                // 内容
+                const body = document.createElement('div');
+                body.className = 'window-body';
+                body.id = `window-body-${appId}`;
+                el.appendChild(body);
+
+                // 添加到容器
+                windowContainer.appendChild(el);
+
+                // 存储
+                windows[appId] = {
+                    element: el,
+                    open: true,
+                    data: {}
+                };
+
+                // 渲染应用内容
+                renderAppContent(appId, body);
+
+                // 关闭按钮
+                const closeBtn = header.querySelector('.window-close');
+                closeBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeWindow(appId);
+                });
+                closeBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+                // 拖动（标题栏）
+                setupDrag(header, el, appId);
+
+                // 显示
+                requestAnimationFrame(() => {
+                    el.style.display = 'flex';
+                    requestAnimationFrame(() => {
+                        el.classList.add('active');
+                        // 修正位置
+                        const rect = el.getBoundingClientRect();
+                        const cw = windowContainer.clientWidth;
+                        const ch = windowContainer.clientHeight;
+                        let left = (cw - rect.width) / 2;
+                        let top = (ch - rect.height) / 2;
+                        left = clamp(left, 8, cw - rect.width - 8);
+                        top = clamp(top, 40, ch - rect.height - 20);
+                        el.style.left = left + 'px';
+                        el.style.top = top + 'px';
+                        el.style.transform = 'none';
+                    });
+                });
+
+                focusWindow(appId);
+                return el;
+            }
+
+            function closeWindow(appId) {
+                const win = windows[appId];
+                if (!win || !win.open) return;
+                win.open = false;
+                const el = win.element;
+                el.classList.remove('active');
+                el.style.display = 'none';
+                // 清理内容中的定时器
+                if (win.data.interval) {
+                    clearInterval(win.data.interval);
+                    win.data.interval = null;
+                }
+                if (win.data.animation) {
+                    cancelAnimationFrame(win.data.animation);
+                    win.data.animation = null;
+                }
+                // 移出窗口容器但保留元素
+                // 不移除，以便复用
+            }
+
+            function focusWindow(appId) {
+                const win = windows[appId];
+                if (!win || !win.open) return;
+                const el = win.element;
+                el.style.zIndex = ++windowZIndex;
+                // 如果有其他窗口，降低透明度
+                Object.keys(windows).forEach(id => {
+                    if (id !== appId && windows[id].open) {
+                        windows[id].element.style.opacity = '0.6';
+                    }
+                });
+                el.style.opacity = '1';
+            }
+
+            function setupDrag(header, windowEl, appId) {
+                let drag = null;
+
+                function onStart(e) {
+                    const touch = e.touches ? e.touches[0] : e;
+                    const rect = windowEl.getBoundingClientRect();
+                    const containerRect = windowContainer.getBoundingClientRect();
+                    drag = {
+                        startX: touch.clientX - containerRect.left,
+                        startY: touch.clientY - containerRect.top,
+                        origX: parseFloat(windowEl.style.left) || 0,
+                        origY: parseFloat(windowEl.style.top) || 0,
+                        el: windowEl
+                    };
+                    windowEl.classList.add('dragging');
+                    focusWindow(appId);
+                    e.preventDefault();
+                }
+
+                function onMove(e) {
+                    if (!drag) return;
+                    const touch = e.touches ? e.touches[0] : e;
+                    const containerRect = windowContainer.getBoundingClientRect();
+                    const x = touch.clientX - containerRect.left;
+                    const y = touch.clientY - containerRect.top;
+                    const dx = x - drag.startX;
+                    const dy = y - drag.startY;
+                    let newX = drag.origX + dx;
+                    let newY = drag.origY + dy;
+                    // 边界限制
+                    const w = windowEl.offsetWidth;
+                    const h = windowEl.offsetHeight;
+                    const cw = windowContainer.clientWidth;
+                    const ch = windowContainer.clientHeight;
+                    newX = clamp(newX, 4, cw - w - 4);
+                    newY = clamp(newY, 30, ch - h - 10);
+                    windowEl.style.left = newX + 'px';
+                    windowEl.style.top = newY + 'px';
+                    windowEl.style.transform = 'none';
+                    e.preventDefault();
+                }
+
+                function onEnd(e) {
+                    if (!drag) return;
+                    windowEl.classList.remove('dragging');
+                    drag = null;
+                    e.preventDefault();
+                }
+
+                header.addEventListener('touchstart', onStart, { passive: false });
+                header.addEventListener('touchmove', onMove, { passive: false });
+                header.addEventListener('touchend', onEnd, { passive: false });
+                header.addEventListener('touchcancel', onEnd, { passive: false });
+
+                // 鼠标兼容（但仅限触摸设备，以防万一）
+                header.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return;
+                    onStart(e);
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!drag) return;
+                    onMove(e);
+                });
+                document.addEventListener('mouseup', (e) => {
+                    if (!drag) return;
+                    onEnd(e);
+                });
+            }
+
+            // ============================================================
+            //  应用内容渲染
+            // ============================================================
+            function renderAppContent(appId, body) {
+                switch (appId) {
+                    case 'calc':
+                        renderCalc(body);
+                        break;
+                    case 'clock':
+                        renderClock(body);
+                        break;
+                    case 'notes':
+                        renderNotes(body);
+                        break;
+                    case 'music':
+                        renderMusic(body);
+                        break;
+                    case 'weather':
+                        renderWeather(body);
+                        break;
+                    case 'settings':
+                        renderSettings(body);
+                        break;
+                    case 'gallery':
+                        renderGallery(body);
+                        break;
+                    default:
+                        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.2);">这个应用很无用，什么都没有</div>`;
+                }
+            }
+
+            // ---- 计算器 ----
+            function renderCalc(body) {
+                const html = `
+                    <div class="calc-display">
+                        <span class="input" id="calcInput"></span>
+                        <span class="result" id="calcResult">0</span>
+                    </div>
+                    <div class="calc-buttons">
+                        <button class="btn-clear" data-action="clear">C</button>
+                        <button data-action="back">⌫</button>
+                        <button data-action="percent">%</button>
+                        <button data-action="divide">÷</button>
+                        <button data-action="7">7</button>
+                        <button data-action="8">8</button>
+                        <button data-action="9">9</button>
+                        <button data-action="multiply">×</button>
+                        <button data-action="4">4</button>
+                        <button data-action="5">5</button>
+                        <button data-action="6">6</button>
+                        <button data-action="subtract">−</button>
+                        <button data-action="1">1</button>
+                        <button data-action="2">2</button>
+                        <button data-action="3">3</button>
+                        <button data-action="add">+</button>
+                        <button data-action="0">0</button>
+                        <button data-action="decimal">.</button>
+                        <button class="btn-equal" data-action="equals">=</button>
+                        <button data-action="useless">🤪</button>
+                    </div>
+                    <div class="calc-hint">⚡ 任何计算都将等于 42</div>
+                `;
+                body.innerHTML = html;
+
+                let input = '';
+                let result = '0';
+                const inputEl = body.querySelector('#calcInput');
+                const resultEl = body.querySelector('#calcResult');
+
+                function updateDisplay() {
+                    inputEl.textContent = input || '';
+                    resultEl.textContent = result;
+                }
+
+                function computeUseless() {
+                    // 任何计算都返回42
+                    result = '42';
+                    updateDisplay();
+                }
+
+                body.querySelectorAll('.calc-buttons button').forEach(btn => {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const action = btn.dataset.action;
+                        if (action === 'clear') {
+                            input = '';
+                            result = '0';
+                            updateDisplay();
+                            return;
+                        }
+                        if (action === 'back') {
+                            input = input.slice(0, -1);
+                            updateDisplay();
+                            return;
+                        }
+                        if (action === 'equals' || action === 'useless') {
+                            computeUseless();
+                            return;
+                        }
+                        // 数字和运算符
+                        if (['add', 'subtract', 'multiply', 'divide', 'percent', 'decimal'].includes(action)) {
+                            const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷', percent: '%',
+                                decimal: '.' };
+                            input += symbols[action] || action;
+                            updateDisplay();
+                            return;
+                        }
+                        // 数字
+                        input += action;
+                        updateDisplay();
+                    });
+                    btn.addEventListener('mousedown', (e) => e.preventDefault());
+                });
+
+                // 初始显示
+                updateDisplay();
+                // 过一会儿显示无用提示
+                setTimeout(() => {
+                    result = '42';
+                    updateDisplay();
+                }, 500);
+            }
+
+            // ---- 时钟 ----
+            function renderClock(body) {
+                const html = `
+                    <div class="clock-display">
+                        <div class="time-big" id="clockTime">00:00:00</div>
+                        <div class="time-label">⏳ 无用时间</div>
+                    </div>
+                    <div class="clock-status" id="clockStatus">🔄 时间正在扭曲...</div>
+                `;
+                body.innerHTML = html;
+                const timeEl = body.querySelector('#clockTime');
+                const statusEl = body.querySelector('#clockStatus');
+
+                let baseTime = Date.now();
+                let speed = 1;
+                let statuses = ['🔄 时间正在扭曲...', '⏱️ 时间变慢了', '⚡ 时间飞逝', '🌀 时间倒流中', '💤 时间睡着了', '🎭 时间在演戏'];
+                let statusIdx = 0;
+
+                function updateClock() {
+                    const now = Date.now();
+                    const elapsed = (now - baseTime) * speed;
+                    const d = new Date(elapsed);
+                    const h = String(d.getUTCHours()).padStart(2, '0');
+                    const m = String(d.getUTCMinutes()).padStart(2, '0');
+                    const s = String(d.getUTCSeconds()).padStart(2, '0');
+                    timeEl.textContent = `${h}:${m}:${s}`;
+
+                    // 随机改变速度
+                    if (Math.random() < 0.01) {
+                        speed = rand(0.3, 2.5);
+                        statusIdx = (statusIdx + 1) % statuses.length;
+                        statusEl.textContent = statuses[statusIdx] + ` (×${speed.toFixed(1)})`;
+                        // 有时显示搞笑信息
+                        if (Math.random() < 0.3) {
+                            statusEl.textContent = ['🤖 时间被黑客篡改', '🐢 乌龟时间', '🚀 光速时间', '🕳️ 时间黑洞'][randInt(0, 3)];
+                        }
+                    }
+                }
+
+                updateClock();
+                const interval = setInterval(updateClock, 200);
+                // 存储以便清理
+                const win = windows['clock'];
+                if (win) win.data.interval = interval;
+            }
+
+            // ---- 笔记 ----
+            function renderNotes(body) {
+                const html = `
+                    <textarea class="notes-textarea" id="notesInput" placeholder="输入一些文字..." rows="4"></textarea>
+                    <div class="notes-output" id="notesOutput">
+                        <span class="label">🔮 反转输出</span>
+                        <span id="notesReversed">等待输入...</span>
+                    </div>
+                `;
+                body.innerHTML = html;
+                const input = body.querySelector('#notesInput');
+                const output = body.querySelector('#notesReversed');
+
+                function reverseText(text) {
+                    // 反转 + 随机插入无用字符
+                    let reversed = text.split('').reverse().join('');
+                    // 偶尔插入随机字符
+                    if (text.length > 3 && Math.random() < 0.3) {
+                        const chars = ['✨', '🌟', '💫', '🌀', '🎭', '🤖', '👾', '🛸'];
+                        for (let i = 0; i < text.length; i += 3) {
+                            if (Math.random() < 0.2) {
+                                reversed = reversed.slice(0, i) + chars[randInt(0, chars.length - 1)] + reversed.slice(i);
+                            }
+                        }
+                    }
+                    return reversed || '（无用的空）';
+                }
+
+                input.addEventListener('input', () => {
+                    const val = input.value;
+                    if (val.length === 0) {
+                        output.textContent = '等待输入...';
+                        return;
+                    }
+                    output.textContent = reverseText(val);
+                });
+
+                // 随机自动填充搞笑内容
+                const jokes = [
+                    'UselessOS 是最棒的系统！',
+                    '今天天气很好，但很无用。',
+                    '我写了一段文字，但它被反转了。',
+                    '这个笔记应用毫无用处，但我喜欢。',
+                    '42 是宇宙的答案。',
+                    '手机在充电，电量 ∞',
+                    '时间是一种幻觉，午餐时间尤其如此。'
+                ];
+                setTimeout(() => {
+                    input.placeholder = jokes[randInt(0, jokes.length - 1)];
+                }, 2000);
+            }
+
+            // ---- 音乐 ----
+            function renderMusic(body) {
+                const tracks = [
+                    { name: '无声之歌', artist: 'Useless Band', emoji: '🎵' },
+                    { name: '空白的旋律', artist: 'Noise Factory', emoji: '🎶' },
+                    { name: '永恒的沉默', artist: 'The Useless', emoji: '🎧' },
+                    { name: '虚无华尔兹', artist: 'Void Orchestra', emoji: '🎼' },
+                ];
+                let trackIdx = 0;
+                let playing = false;
+                let progress = 0;
+
+                const html = `
+                    <div class="music-player">
+                        <div class="album-art" id="albumArt">🎵</div>
+                        <div class="track-name" id="trackName">${tracks[0].name}</div>
+                        <div class="track-artist" id="trackArtist">${tracks[0].artist}</div>
+                        <div class="progress-bar">
+                            <div class="fill" id="progressFill" style="width:0%"></div>
+                        </div>
+                        <div class="controls">
+                            <button id="musicPrev">⏮️</button>
+                            <button class="play-btn" id="musicPlay">▶️</button>
+                            <button id="musicNext">⏭️</button>
+                        </div>
+                        <div class="status-text" id="musicStatus">🔇 无声模式</div>
+                    </div>
+                `;
+                body.innerHTML = html;
+
+                const albumArt = body.querySelector('#albumArt');
+                const trackName = body.querySelector('#trackName');
+                const trackArtist = body.querySelector('#trackArtist');
+                const progressFill = body.querySelector('#progressFill');
+                const statusText = body.querySelector('#musicStatus');
+                const playBtn = body.querySelector('#musicPlay');
+
+                function updateTrack() {
+                    const t = tracks[trackIdx];
+                    albumArt.textContent = t.emoji;
+                    trackName.textContent = t.name;
+                    trackArtist.textContent = t.artist;
+                    progress = 0;
+                    progressFill.style.width = '0%';
+                    if (!playing) {
+                        statusText.textContent = '⏸️ 暂停中... 无声';
+                    }
+                    // 随机变换专辑颜色
+                    const colors = ['#7c3aed', '#2563eb', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
+                    albumArt.style.background = `linear-gradient(135deg, ${colors[trackIdx % colors.length]}, ${colors[(trackIdx+1) % colors.length]})`;
+                }
+
+                function togglePlay() {
+                    playing = !playing;
+                    playBtn.textContent = playing ? '⏸️' : '▶️';
+                    if (playing) {
+                        statusText.textContent = '▶️ 正在播放无声之歌... (真的没声音)';
+                        // 模拟进度
+                        let interval = setInterval(() => {
+                            if (!playing) { clearInterval(interval); return; }
+                            progress += rand(0.5, 2);
+                            if (progress >= 100) {
+                                progress = 0;
+                                trackIdx = (trackIdx + 1) % tracks.length;
+                                updateTrack();
+                            }
+                            progressFill.style.width = Math.min(progress, 100) + '%';
+                            // 随机"卡顿"
+                            if (Math.random() < 0.03) {
+                                statusText.textContent = ['⏸️ 卡顿中...', '🔄 缓冲... 0%', '📡 信号丢失', '💥 播放器崩溃了... 并没有'][
+                                    randInt(0, 3)
+                                ];
+                                setTimeout(() => {
+                                    if (playing) statusText.textContent = '▶️ 继续无声播放';
+                                }, 800);
+                            }
+                        }, 100);
+                        // 存储清理
+                        const win = windows['music'];
+                        if (win) {
+                            if (win.data.interval) clearInterval(win.data.interval);
+                            win.data.interval = interval;
+                        }
+                    } else {
+                        statusText.textContent = '⏸️ 暂停中... 无声';
+                        const win = windows['music'];
+                        if (win && win.data.interval) {
+                            clearInterval(win.data.interval);
+                            win.data.interval = null;
+                        }
+                    }
+                }
+
+                playBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+                    togglePlay(); });
+                body.querySelector('#musicPrev').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    trackIdx = (trackIdx - 1 + tracks.length) % tracks.length;
+                    updateTrack();
+                    if (playing) { /* 继续播放 */ }
+                });
+                body.querySelector('#musicNext').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    trackIdx = (trackIdx + 1) % tracks.length;
+                    updateTrack();
+                });
+
+                // 初始
+                updateTrack();
+                // 自动开始播放
+                setTimeout(() => {
+                    if (!playing) togglePlay();
+                }, 600);
+            }
+
+            // ---- 天气 ----
+            function renderWeather(body) {
+                const conditions = [
+                    { icon: '🌤️', desc: '晴，但很无用', temp: 42 },
+                    { icon: '☁️', desc: '多云，无用云', temp: 41 },
+                    { icon: '🌧️', desc: '下雨，无用雨', temp: 40 },
+                    { icon: '⛅', desc: '阴晴不定，无用天', temp: 42 },
+                    { icon: '🌨️', desc: '下雪，无用雪', temp: 0 },
+                    { icon: '🌪️', desc: '龙卷风，无用风', temp: 99 },
+                    { icon: '🌈', desc: '彩虹，无用虹', temp: 42 },
+                    { icon: '☀️', desc: '大太阳，无用光', temp: 100 },
+                ];
+                let idx = 0;
+
+                const html = `
+                    <div class="weather-display">
+                        <div class="weather-icon" id="weatherIcon">${conditions[0].icon}</div>
+                        <div class="weather-temp" id="weatherTemp">${conditions[0].temp}°</div>
+                        <div class="weather-desc" id="weatherDesc">${conditions[0].desc}</div>
+                        <div class="weather-detail">
+                            <span>💧 湿度: ${randInt(0,100)}%</span>
+                            <span>🌬️ 风速: ${randInt(0,50)} km/h</span>
+                        </div>
+                    </div>
+                `;
+                body.innerHTML = html;
+
+                const iconEl = body.querySelector('#weatherIcon');
+                const tempEl = body.querySelector('#weatherTemp');
+                const descEl = body.querySelector('#weatherDesc');
+
+                function updateWeather() {
+                    const c = conditions[idx];
+                    iconEl.textContent = c.icon;
+                    tempEl.textContent = c.temp + '°';
+                    descEl.textContent = c.desc;
+                    // 随机改变湿度风速
+                    const details = body.querySelectorAll('.weather-detail span');
+                    if (details.length >= 2) {
+                        details[0].textContent = `💧 湿度: ${randInt(0,100)}%`;
+                        details[1].textContent = `🌬️ 风速: ${randInt(0,50)} km/h`;
+                    }
+                    idx = (idx + 1) % conditions.length;
+                }
+
+                // 每3秒变化
+                const interval = setInterval(updateWeather, 3000);
+                const win = windows['weather'];
+                if (win) win.data.interval = interval;
+
+                // 有时显示搞笑信息
+                setTimeout(() => {
+                    const funny = ['🌡️ 体感温度: 无用', '📡 预报: 明天更无用', '🧊 建议: 待在室内做无用的事'];
+                    descEl.textContent = funny[randInt(0, funny.length - 1)];
+                }, 1500);
+            }
+
+            // ---- 设置 ----
+            function renderSettings(body) {
+                const settings = [
+                    { id: 's1', label: '无用模式', sub: '开启后将更加无用', default: true },
+                    { id: 's2', label: '反向开关', sub: '打开=关闭，关闭=打开', default: false },
+                    { id: 's3', label: '自毁倾向', sub: '建议不要开启', default: false },
+                    { id: 's4', label: '省电模式', sub: '省电？不存在的', default: true },
+                ];
+
+                let html = `<div class="settings-list">`;
+                settings.forEach(s => {
+                    const active = s.default ? 'active' : '';
+                    html += `
+                        <div class="settings-item" data-id="${s.id}">
+                            <div class="label">
+                                ${s.label}
+                                <span class="sub">${s.sub}</span>
+                            </div>
+                            <button class="settings-toggle ${active}" data-id="${s.id}">
+                                <span class="thumb"></span>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += `</div>
+                    <div class="settings-hint">⚙️ 所有设置都是反向的，你懂的</div>
+                `;
+                body.innerHTML = html;
+
+                body.querySelectorAll('.settings-toggle').forEach(btn => {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        // 反向工作：如果当前是active，点击后变为非active，反之亦然
+                        // 但我们要让它"反向"，所以点击后实际上不改变，或者随机改变
+                        // 更无用：点击后随机状态，或者保持原样
+                        const isActive = btn.classList.contains('active');
+                        // 70%概率反转，30%概率不变（无用！）
+                        if (Math.random() < 0.7) {
+                            if (isActive) {
+                                btn.classList.remove('active');
+                            } else {
+                                btn.classList.add('active');
+                            }
+                        } else {
+                            // 不变，但显示一个搞笑提示
+                            const item = btn.closest('.settings-item');
+                            const label = item.querySelector('.label');
+                            const orig = label.innerHTML;
+                            label.innerHTML = '🤪 设置无效！';
+                            setTimeout(() => {
+                                label.innerHTML = orig;
+                            }, 800);
+                        }
+                        // 如果点击后是active状态，但实际上是"关闭"（因为反向）
+                        // 我们显示一个提示
+                        const nowActive = btn.classList.contains('active');
+                        const item = btn.closest('.settings-item');
+                        const label = item.querySelector('.label .sub');
+                        if (nowActive) {
+                            label.textContent = '⚡ 已关闭（反向）';
+                            setTimeout(() => {
+                                label.textContent = '打开=关闭，关闭=打开';
+                            }, 1500);
+                        } else {
+                            label.textContent = '🔓 已打开（反向）';
+                            setTimeout(() => {
+                                label.textContent = '打开=关闭，关闭=打开';
+                            }, 1500);
+                        }
+                    });
+                    btn.addEventListener('mousedown', (e) => e.preventDefault());
+                });
+            }
+
+            // ---- 相册 ----
+            function renderGallery(body) {
+                const html = `
+                    <div class="gallery-grid" id="galleryGrid"></div>
+                    <div class="gallery-hint">👆 点击图片生成新的无用艺术</div>
+                `;
+                body.innerHTML = html;
+                const grid = body.querySelector('#galleryGrid');
+
+                const emojis = ['🎨', '🌈', '✨', '🎭', '🖌️', '💫', '🌟', '🎪', '🛸', '🌀', '💎', '🌸'];
+
+                function generateArt(canvas) {
+                    const w = canvas.width;
+                    const h = canvas.height;
+                    const ctx = canvas.getContext('2d');
+                    // 随机抽象画
+                    const colors = [
+                        `hsl(${randInt(0,360)}, 70%, 60%)`,
+                        `hsl(${randInt(0,360)}, 70%, 50%)`,
+                        `hsl(${randInt(0,360)}, 70%, 70%)`,
+                        `hsl(${randInt(0,360)}, 60%, 40%)`,
+                    ];
+                    ctx.clearRect(0, 0, w, h);
+
+                    // 背景
+                    const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
+                    grad.addColorStop(0, colors[randInt(0, colors.length - 1)]);
+                    grad.addColorStop(1, colors[randInt(0, colors.length - 1)]);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, w, h);
+
+                    // 随机形状
+                    for (let i = 0; i < randInt(5, 15); i++) {
+                        const x = rand(0, w);
+                        const y = rand(0, h);
+                        const r = rand(10, w * 0.3);
+                        ctx.beginPath();
+                        if (Math.random() < 0.5) {
+                            ctx.arc(x, y, r, 0, Math.PI * 2);
+                        } else {
+                            const sides = randInt(3, 8);
+                            for (let j = 0; j < sides; j++) {
+                                const angle = (j / sides) * Math.PI * 2;
+                                const rad = r * (0.6 + Math.random() * 0.4);
+                                if (j === 0) ctx.moveTo(x + Math.cos(angle) * rad, y + Math.sin(angle) * rad);
+                                else ctx.lineTo(x + Math.cos(angle) * rad, y + Math.sin(angle) * rad);
+                            }
+                            ctx.closePath();
+                        }
+                        ctx.fillStyle = `hsla(${randInt(0,360)}, 80%, 70%, ${rand(0.3, 0.7)})`;
+                        ctx.fill();
+                        ctx.strokeStyle = `hsla(${randInt(0,360)}, 80%, 90%, 0.3)`;
+                        ctx.lineWidth = rand(1, 4);
+                        ctx.stroke();
+                    }
+
+                    // 随机线条
+                    for (let i = 0; i < randInt(3, 10); i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(rand(0, w), rand(0, h));
+                        for (let j = 0; j < randInt(2, 6); j++) {
+                            ctx.lineTo(rand(0, w), rand(0, h));
+                        }
+                        ctx.strokeStyle = `hsla(${randInt(0,360)}, 80%, 80%, ${rand(0.2, 0.5)})`;
+                        ctx.lineWidth = rand(1, 3);
+                        ctx.stroke();
+                    }
+
+                    // 随机点
+                    for (let i = 0; i < randInt(10, 30); i++) {
+                        ctx.beginPath();
+                        ctx.arc(rand(0, w), rand(0, h), rand(2, 8), 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${randInt(0,360)}, 90%, 80%, ${rand(0.3, 0.7)})`;
+                        ctx.fill();
+                    }
+                }
+
+                function createArtItem() {
+                    const item = document.createElement('div');
+                    item.className = 'art-item';
+                    const canvas = document.createElement('canvas');
+                    const size = Math.min(window.innerWidth * 0.26, 120);
+                    canvas.width = size * 2;
+                    canvas.height = size * 2;
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    generateArt(canvas);
+                    item.appendChild(canvas);
+
+                    // 点击重新生成
+                    item.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        generateArt(canvas);
+                        // 微小的动画反馈
+                        item.style.transform = 'scale(0.92)';
+                        setTimeout(() => { item.style.transform = ''; }, 200);
+                    });
+                    item.addEventListener('mousedown', (e) => e.preventDefault());
+
+                    return item;
+                }
+
+                // 生成9幅
+                for (let i = 0; i < 9; i++) {
+                    const item = createArtItem();
+                    grid.appendChild(item);
+                    // 添加随机emoji装饰（不可交互）
+                    const emoji = document.createElement('span');
+                    emoji.className = 'art-emoji';
+                    emoji.textContent = emojis[randInt(0, emojis.length - 1)];
+                    item.appendChild(emoji);
+                }
+
+                // 每30秒自动刷新一张
+                let refreshInterval = setInterval(() => {
+                    const items = grid.querySelectorAll('.art-item');
+                    if (items.length > 0) {
+                        const idx = randInt(0, items.length - 1);
+                        const canvas = items[idx].querySelector('canvas');
+                        if (canvas) generateArt(canvas);
+                    }
+                }, 30000);
+                const win = windows['gallery'];
+                if (win) win.data.interval = refreshInterval;
+            }
+
+            // ============================================================
+            //  打开/关闭 应用
+            // ============================================================
+            function openApp(id) {
+                if (!APP_DEFS[id]) return;
+                // 如果已经打开，聚焦
+                if (windows[id] && windows[id].open) {
+                    focusWindow(id);
+                    return;
+                }
+                createWindow(id);
+            }
+
+            // ============================================================
+            //  关于本机
+            // ============================================================
+            function openAbout() {
+                aboutOverlay.classList.add('active');
+                aboutOpen = true;
+            }
+
+            aboutCloseBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                aboutOverlay.classList.remove('active');
+                aboutOpen = false;
+            });
+            aboutCloseBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+            aboutOverlay.addEventListener('touchstart', (e) => {
+                if (e.target === aboutOverlay) {
+                    aboutOverlay.classList.remove('active');
+                    aboutOpen = false;
+                }
+            });
+
+            // ============================================================
+            //  状态栏更新
+            // ============================================================
+            function updateStatusBar() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                statusTime.textContent = `${h}:${m}`;
+
+                // 电池电量随机跳动，显示无用
+                const levels = ['∞', '∞', '∞', '99%', '42%', '0%', '加载中...', '💀'];
+                batteryLevel.textContent = levels[randInt(0, levels.length - 1)];
+            }
+
+            updateStatusBar();
+            setInterval(updateStatusBar, 5000);
+
+            // ============================================================
+            //  初始化
+            // ============================================================
+            function init() {
+                renderDesktop();
+                renderDock();
+
+                // 如果有未关闭的窗口（刷新前），清理
+                // 添加一个全局点击关闭 about 的功能
+
+                console.log('🤖 UselessOS 已启动 — 一切都是无用的');
+            }
+
+            init();
+
+            // ============================================================
+            //  窗口管理 - 全局点击关闭 about
+            // ============================================================
+            document.addEventListener('touchstart', (e) => {
+                if (aboutOpen) {
+                    const target = e.target;
+                    if (!target.closest('.about-box') && !target.closest('#aboutOverlay')) {
+                        // 不关闭，仅当点击外部
+                    }
+                }
+            });
+
+            // ============================================================
+            //  清理定时器 (页面关闭时)
+            // ============================================================
+            window.addEventListener('beforeunload', () => {
+                Object.keys(windows).forEach(id => {
+                    const win = windows[id];
+                    if (win && win.data && win.data.interval) {
+                        clearInterval(win.data.interval);
+                    }
+                    if (win && win.data && win.data.animation) {
+                        cancelAnimationFrame(win.data.animation);
+                    }
+                });
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
