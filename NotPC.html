@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NotPC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0e1a;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            touch-action: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            background: radial-gradient(ellipse at 50% 30%, #141b33 0%, #0a0e1a 70%);
+            position: relative;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: none;
+            background: transparent;
+        }
+
+        /* ===== PC 提示遮罩 ===== */
+        #pcOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 26, 0.96);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 40px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        #pcOverlay.hidden {
+            display: none;
+        }
+        #pcOverlay .icon {
+            font-size: 72px;
+            margin-bottom: 24px;
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+        #pcOverlay h1 {
+            color: #ff6b6b;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+        }
+        #pcOverlay p {
+            color: #aab;
+            font-size: 18px;
+            line-height: 1.7;
+            max-width: 380px;
+            margin: 0 auto 8px;
+        }
+        #pcOverlay .emoji-big {
+            font-size: 48px;
+            margin: 16px 0 8px;
+            letter-spacing: 12px;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+        }
+
+        /* ===== 开始 / 结束 UI (Canvas 覆盖层) ===== */
+        #uiOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        #uiOverlay.active {
+            pointer-events: auto;
+        }
+
+        .ui-panel {
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 40px;
+            padding: 40px 36px 48px;
+            max-width: 340px;
+            width: 85%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+        .ui-panel.visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            display: block;
+        }
+
+        .ui-panel .game-title {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d4ff, #7b61ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 60px rgba(0, 212, 255, 0.2);
+        }
+        .ui-panel .subtitle {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            letter-spacing: 6px;
+            margin-bottom: 24px;
+            font-weight: 300;
+        }
+        .ui-panel .score-display {
+            color: #fff;
+            font-size: 64px;
+            font-weight: 800;
+            margin: 8px 0 4px;
+            line-height: 1;
+        }
+        .ui-panel .score-label {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .ui-panel .best-score {
+            color: rgba(255, 215, 0, 0.7);
+            font-size: 16px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .ui-panel .desc {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 16px 0 28px;
+        }
+        .ui-panel .desc .emoji-row {
+            font-size: 28px;
+            letter-spacing: 6px;
+            display: block;
+            margin-top: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 48px;
+            border: none;
+            border-radius: 60px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #00d4ff, #7b61ff);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.25);
+            letter-spacing: 1px;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active {
+            transform: scale(0.94);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.15);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .btn:active::after {
+            opacity: 1;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            box-shadow: 0 8px 32px rgba(245, 87, 108, 0.25);
+        }
+
+        /* ===== 游戏内 HUD ===== */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 16px 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 5;
+            pointer-events: none;
+            color: #fff;
+            font-weight: 700;
+        }
+        #hud .score {
+            font-size: 28px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 16px;
+            border-radius: 30px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            letter-spacing: 1px;
+        }
+        #hud .score span {
+            color: #00d4ff;
+        }
+        #hud .hint {
+            font-size: 13px;
+            opacity: 0.5;
+            font-weight: 400;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        #hud .hint .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d4ff;
+            margin-right: 6px;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        /* ===== 游戏结束特效 (Canvas 粒子会自己画) ===== */
+
+        /* ===== 响应式微调 ===== */
+        @media (max-width: 420px) {
+            .ui-panel {
+                padding: 28px 20px 36px;
+                border-radius: 32px;
+            }
+            .ui-panel .game-title {
+                font-size: 34px;
+            }
+            .ui-panel .score-display {
+                font-size: 48px;
+            }
+            .btn {
+                padding: 14px 36px;
+                font-size: 17px;
+            }
+            #hud .score {
+                font-size: 22px;
+                padding: 2px 12px;
+            }
+            #hud .hint {
+                font-size: 11px;
+                padding: 2px 10px;
+            }
+            #pcOverlay h1 {
+                font-size: 26px;
+            }
+            #pcOverlay p {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-height: 640px) {
+            .ui-panel {
+                padding: 20px 16px 28px;
+            }
+            .ui-panel .game-title {
+                font-size: 30px;
+            }
+            .ui-panel .score-display {
+                font-size: 40px;
+            }
+            .ui-panel .desc {
+                margin: 8px 0 16px;
+                font-size: 13px;
+            }
+            .btn {
+                padding: 12px 32px;
+                font-size: 16px;
+            }
+            #hud {
+                padding: 10px 14px 6px;
+            }
+            #hud .score {
+                font-size: 20px;
+            }
+        }
+
+        /* 安全区域适配 */
+        @supports (padding: max(0px)) {
+            #hud {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-top: max(16px, env(safe-area-inset-top));
+            }
+            .ui-panel {
+                padding-left: max(36px, env(safe-area-inset-left));
+                padding-right: max(36px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== PC 访问遮罩 ===== -->
+    <div id="pcOverlay">
+        <div class="icon">🚫</div>
+        <h1>NotPC</h1>
+        <p>这是一款 <strong>仅限手机</strong> 的触控游戏</p>
+        <p style="font-size:15px; color:#889; margin-top:4px;">请用手机扫描二维码或直接在手机上打开</p>
+        <div class="emoji-big">📱 ✋ 🎮</div>
+        <p style="font-size:13px; color:#667; margin-top:16px;">检测到您正在使用电脑访问</p>
+    </div>
+
+    <!-- ===== 游戏主体 ===== -->
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="score">🏆 <span id="scoreDisplay">0</span></div>
+            <div class="hint"><span class="dot"></span> 滑动操控</div>
+        </div>
+
+        <!-- UI 覆盖层 -->
+        <div id="uiOverlay">
+            <!-- 开始面板 -->
+            <div id="startPanel" class="ui-panel visible">
+                <div class="game-title">NotPC</div>
+                <div class="subtitle">✦ 触控生存 ✦</div>
+                <div class="desc">
+                    滑动手指控制角色<br>
+                    躲避 <strong>PC</strong> 元素 · 活得更久
+                    <span class="emoji-row">💻 🖱️ ⌨️ 🖨️</span>
+                </div>
+                <button class="btn" id="startBtn">开始游戏</button>
+            </div>
+
+            <!-- 结束面板 -->
+            <div id="endPanel" class="ui-panel">
+                <div class="game-title" style="font-size:28px; -webkit-text-fill-color:#f5576c; background:linear-gradient(135deg,#f5576c,#f093fb); -webkit-background-clip:text; background-clip:text;">游戏结束</div>
+                <div class="score-label">得分</div>
+                <div class="score-display" id="finalScore">0</div>
+                <div class="best-score" id="bestScore">🏅 最高纪录: 0</div>
+                <div style="margin: 20px 0 8px; font-size:32px; letter-spacing:6px;" id="endEmoji">💻</div>
+                <button class="btn btn-restart" id="restartBtn">再来一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  NOTPC  –  手机触控躲避游戏
+        //  仅支持触摸设备，PC 访问显示遮罩
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // --- 检测是否为触摸设备 ---
+            const isTouchDevice = ('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (navigator.msMaxTouchPoints > 0);
+
+            const pcOverlay = document.getElementById('pcOverlay');
+
+            if (!isTouchDevice) {
+                // 电脑访问：显示遮罩，不启动游戏
+                pcOverlay.classList.remove('hidden');
+                // 仍然初始化canvas但禁止交互
+                return;
+            } else {
+                pcOverlay.classList.add('hidden');
+            }
+
+            // --- DOM 引用 ---
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const scoreSpan = document.getElementById('scoreDisplay');
+            const finalScoreEl = document.getElementById('finalScore');
+            const bestScoreEl = document.getElementById('bestScore');
+            const endEmojiEl = document.getElementById('endEmoji');
+            const startPanel = document.getElementById('startPanel');
+            const endPanel = document.getElementById('endPanel');
+            const uiOverlay = document.getElementById('uiOverlay');
+            const startBtn = document.getElementById('startBtn');
+            const restartBtn = document.getElementById('restartBtn');
+
+            // --- Canvas 尺寸 ---
+            let W, H, scale;
+
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                W = rect.width;
+                H = rect.height;
+                canvas.width = W * window.devicePixelRatio || W;
+                canvas.height = H * window.devicePixelRatio || H;
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                scale = (window.devicePixelRatio || 1);
+                ctx.scale(scale, scale);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(resizeCanvas, 300);
+            });
+
+            // --- 游戏状态 ---
+            const STATE = {
+                MENU: 0,
+                PLAYING: 1,
+                GAMEOVER: 2
+            };
+
+            let state = STATE.MENU;
+            let score = 0;
+            let bestScore = parseInt(localStorage.getItem('notpc_best')) || 0;
+            let frameCount = 0;
+            let difficulty = 1;
+            let spawnRate = 45; // frames between spawns
+            let spawnCounter = 0;
+            let speedBase = 1.8;
+
+            // --- 玩家 ---
+            const player = {
+                x: 0,
+                y: 0,
+                radius: 22,
+                targetX: 0,
+                smoothX: 0,
+            };
+
+            // --- 障碍物 ---
+            let obstacles = [];
+            const PC_EMOJIS = ['💻', '🖥️', '🖱️', '⌨️', '🖨️', '💾', '📀', '📠', '🖲️'];
+            const EMOJI_COLORS = ['#ff6b6b', '#ffa94d', '#ffd93d', '#6bcb77', '#4d96ff', '#9b59b6', '#fd79a8', '#00cec9', '#fdcb6e'];
+
+            // --- 粒子特效 ---
+            let particles = [];
+
+            // --- 触控 ---
+            let isTouching = false;
+            let touchX = 0;
+
+            // ==========================================================
+            //  工具函数
+            // ==========================================================
+            function rand(min, max) { return Math.random() * (max - min) + min; }
+
+            function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+
+            function dist(x1, y1, x2, y2) {
+                return Math.hypot(x2 - x1, y2 - y1);
+            }
+
+            function lerp(a, b, t) { return a + (b - a) * t; }
+
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+            // ==========================================================
+            //  粒子系统
+            // ==========================================================
+            function emitParticles(x, y, count, color, speed, life) {
+                for (let i = 0; i < count; i++) {
+                    const angle = rand(0, Math.PI * 2);
+                    const spd = rand(0.5, speed);
+                    particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * spd,
+                        vy: Math.sin(angle) * spd - rand(0.5, 1.5),
+                        radius: rand(3, 7),
+                        life: rand(life * 0.5, life),
+                        maxLife: life,
+                        color: color,
+                        decay: rand(0.96, 0.995),
+                    });
+                }
+            }
+
+            function emitScoreParticles(x, y) {
+                const colors = ['#00d4ff', '#7b61ff', '#ffd93d', '#6bcb77', '#ff6b6b'];
+                for (let i = 0; i < 20; i++) {
+                    const angle = rand(0, Math.PI * 2);
+                    const spd = rand(1, 4);
+                    particles.push({
+                        x: x + rand(-8, 8),
+                        y: y + rand(-8, 8),
+                        vx: Math.cos(angle) * spd,
+                        vy: Math.sin(angle) * spd - 1,
+                        radius: rand(2, 5),
+                        life: rand(20, 50),
+                        maxLife: 50,
+                        color: colors[randInt(0, colors.length - 1)],
+                        decay: rand(0.97, 0.995),
+                    });
+                }
+            }
+
+            function updateParticles() {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.04;
+                    p.vx *= p.decay || 0.99;
+                    p.vy *= p.decay || 0.99;
+                    p.life--;
+                    if (p.life <= 0 || p.y > H + 20) {
+                        particles.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawParticles() {
+                for (const p of particles) {
+                    const alpha = clamp(p.life / p.maxLife, 0, 1);
+                    ctx.globalAlpha = alpha * 0.9;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius * alpha, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color || '#fff';
+                    ctx.fill();
+                    // glow
+                    ctx.shadowColor = p.color || '#fff';
+                    ctx.shadowBlur = 12;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // ==========================================================
+            //  障碍物
+            // ==========================================================
+            function spawnObstacle() {
+                const emoji = PC_EMOJIS[randInt(0, PC_EMOJIS.length - 1)];
+                const color = EMOJI_COLORS[randInt(0, EMOJI_COLORS.length - 1)];
+                const size = rand(28, 42);
+                const x = rand(size, W - size);
+                const y = -size;
+                // 速度随难度增加
+                const speed = speedBase + difficulty * 0.12 + rand(0, 0.3);
+                obstacles.push({
+                    x: x,
+                    y: y,
+                    size: size,
+                    emoji: emoji,
+                    color: color,
+                    speed: speed,
+                    rotation: rand(0, Math.PI * 2),
+                    rotSpeed: rand(-0.02, 0.02),
+                    wobble: rand(0, 0.5),
+                    wobbleSpeed: rand(0.01, 0.03),
+                    phase: rand(0, Math.PI * 2),
+                });
+            }
+
+            function updateObstacles() {
+                const toRemove = [];
+                for (let i = 0; i < obstacles.length; i++) {
+                    const o = obstacles[i];
+                    // 移动
+                    o.y += o.speed;
+                    o.rotation += o.rotSpeed;
+                    o.x += Math.sin(o.phase) * o.wobble;
+                    o.phase += o.wobbleSpeed;
+
+                    // 超出屏幕底部 → 得分
+                    if (o.y > H + 30) {
+                        toRemove.push(i);
+                        score++;
+                        updateScoreDisplay();
+                        emitScoreParticles(o.x, H - 20);
+                        // 每10分增加难度
+                        const newDiff = 1 + Math.floor(score / 8) * 0.25;
+                        difficulty = Math.min(newDiff, 6);
+                        spawnRate = Math.max(18, 45 - difficulty * 2.5);
+                        continue;
+                    }
+
+                    // 碰撞检测 (圆形碰撞)
+                    const dx = player.x - o.x;
+                    const dy = player.y - o.y;
+                    const dist2 = Math.hypot(dx, dy);
+                    const threshold = player.radius + o.size * 0.45;
+                    if (dist2 < threshold) {
+                        // 游戏结束
+                        gameOver();
+                        return;
+                    }
+                }
+
+                // 移除已出界的（从后往前）
+                for (let i = toRemove.length - 1; i >= 0; i--) {
+                    obstacles.splice(toRemove[i], 1);
+                }
+            }
+
+            // ==========================================================
+            //  玩家
+            // ==========================================================
+            function updatePlayer() {
+                // 平滑跟随触摸
+                player.smoothX = lerp(player.smoothX, player.targetX, 0.18);
+                player.x = player.smoothX;
+                // Y固定在底部偏上
+                player.y = H - 70 - player.radius;
+                // 边界
+                player.x = clamp(player.x, player.radius, W - player.radius);
+                player.targetX = clamp(player.targetX, player.radius, W - player.radius);
+            }
+
+            function drawPlayer() {
+                const x = player.x;
+                const y = player.y;
+                const r = player.radius;
+
+                // 光晕
+                const grad = ctx.createRadialGradient(x, y, r * 0.2, x, y, r * 2.2);
+                grad.addColorStop(0, 'rgba(0, 212, 255, 0.25)');
+                grad.addColorStop(0.5, 'rgba(0, 212, 255, 0.08)');
+                grad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+                ctx.beginPath();
+                ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // 外圈
+                ctx.beginPath();
+                ctx.arc(x, y, r + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 主体
+                const grad2 = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+                grad2.addColorStop(0, '#6ee7ff');
+                grad2.addColorStop(0.6, '#00b4d8');
+                grad2.addColorStop(1, '#0077b6');
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fillStyle = grad2;
+                ctx.fill();
+
+                // 高光
+                ctx.beginPath();
+                ctx.arc(x - r * 0.25, y - r * 0.3, r * 0.22, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fill();
+
+                // 内圈高光
+                ctx.beginPath();
+                ctx.arc(x - r * 0.1, y - r * 0.45, r * 0.08, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.fill();
+
+                // 文字 "NP"
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${r * 0.7}px -apple-system, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.fillText('NP', x, y + 1);
+                ctx.shadowBlur = 0;
+
+                // 护盾闪烁（低生命时不会用，但保留装饰）
+                if (frameCount % 60 < 30) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, r + 10, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0, 212, 255, ${0.08 + 0.06 * Math.sin(frameCount * 0.05)})`;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 8]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+
+            // ==========================================================
+            //  绘制背景
+            // ==========================================================
+            function drawBackground() {
+                // 渐变背景
+                const grad = ctx.createLinearGradient(0, 0, 0, H);
+                grad.addColorStop(0, '#0a0e1a');
+                grad.addColorStop(0.5, '#111b3a');
+                grad.addColorStop(1, '#0a0e1a');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, W, H);
+
+                // 网格
+                ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+                ctx.lineWidth = 1;
+                const step = 50;
+                for (let x = 0; x <= W; x += step) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, H);
+                    ctx.stroke();
+                }
+                for (let y = 0; y <= H; y += step) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(W, y);
+                    ctx.stroke();
+                }
+
+                // 动态光点
+                for (let i = 0; i < 8; i++) {
+                    const x = (i * 137 + frameCount * 0.02) % W;
+                    const y = (i * 251 + frameCount * 0.015) % H;
+                    const r = 1.5 + Math.sin(frameCount * 0.01 + i) * 0.8;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 212, 255, ${0.03 + 0.02 * Math.sin(frameCount * 0.02 + i)})`;
+                    ctx.fill();
+                }
+            }
+
+            // ==========================================================
+            //  绘制障碍物
+            // ==========================================================
+            function drawObstacles() {
+                for (const o of obstacles) {
+                    const x = o.x;
+                    const y = o.y;
+                    const s = o.size;
+
+                    // 光晕
+                    const grad = ctx.createRadialGradient(x, y, s * 0.1, x, y, s * 0.9);
+                    grad.addColorStop(0, o.color + '30');
+                    grad.addColorStop(1, 'transparent');
+                    ctx.beginPath();
+                    ctx.arc(x, y, s * 0.9, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    // Emoji
+                    ctx.font = `${s}px -apple-system, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = o.color + '60';
+                    ctx.shadowBlur = 20;
+                    ctx.fillText(o.emoji, x, y + 2);
+                    ctx.shadowBlur = 0;
+
+                    // 小光晕
+                    ctx.beginPath();
+                    ctx.arc(x, y, s * 0.5, 0, Math.PI * 2);
+                    const grad2 = ctx.createRadialGradient(x, y, 0, x, y, s * 0.5);
+                    grad2.addColorStop(0, 'rgba(255,255,255,0.04)');
+                    grad2.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.fillStyle = grad2;
+                    ctx.fill();
+                }
+            }
+
+            // ==========================================================
+            //  UI 更新
+            // ==========================================================
+            function updateScoreDisplay() {
+                scoreSpan.textContent = score;
+            }
+
+            function showPanel(panel) {
+                [startPanel, endPanel].forEach(p => p.classList.remove('visible'));
+                if (panel) {
+                    panel.classList.add('visible');
+                    uiOverlay.classList.add('active');
+                } else {
+                    uiOverlay.classList.remove('active');
+                }
+            }
+
+            function showStartPanel() {
+                showPanel(startPanel);
+                state = STATE.MENU;
+            }
+
+            function showEndPanel() {
+                finalScoreEl.textContent = score;
+                // 更新最高分
+                if (score > bestScore) {
+                    bestScore = score;
+                    localStorage.setItem('notpc_best', String(bestScore));
+                }
+                bestScoreEl.textContent = '🏅 最高纪录: ' + bestScore;
+                // 根据分数显示不同表情
+                if (score >= 50) endEmojiEl.textContent = '🏆';
+                else if (score >= 30) endEmojiEl.textContent = '🌟';
+                else if (score >= 15) endEmojiEl.textContent = '💪';
+                else if (score >= 5) endEmojiEl.textContent = '😅';
+                else endEmojiEl.textContent = '💻';
+                showPanel(endPanel);
+                state = STATE.GAMEOVER;
+            }
+
+            // ==========================================================
+            //  游戏核心逻辑
+            // ==========================================================
+            function resetGame() {
+                score = 0;
+                difficulty = 1;
+                spawnRate = 45;
+                spawnCounter = 0;
+                obstacles = [];
+                particles = [];
+                frameCount = 0;
+                player.x = W / 2;
+                player.smoothX = W / 2;
+                player.targetX = W / 2;
+                updateScoreDisplay();
+            }
+
+            function startGame() {
+                resetGame();
+                showPanel(null);
+                state = STATE.PLAYING;
+                // 隐藏HUD提示
+                document.querySelector('#hud .hint').style.opacity = '1';
+            }
+
+            function gameOver() {
+                // 爆炸粒子
+                emitParticles(player.x, player.y, 60, '#ff6b6b', 8, 60);
+                emitParticles(player.x, player.y, 30, '#ffd93d', 5, 40);
+                showEndPanel();
+                state = STATE.GAMEOVER;
+            }
+
+            // ==========================================================
+            //  主循环
+            // ==========================================================
+            function gameLoop() {
+                frameCount++;
+
+                // --- 更新 ---
+                if (state === STATE.PLAYING) {
+                    // 生成障碍物
+                    spawnCounter++;
+                    if (spawnCounter >= spawnRate) {
+                        spawnCounter = 0;
+                        // 一次可能生成多个（高难度）
+                        let count = 1;
+                        if (difficulty > 3) count = 2;
+                        if (difficulty > 5) count = 3;
+                        for (let i = 0; i < count; i++) {
+                            setTimeout(() => { spawnObstacle(); }, i * 80);
+                        }
+                        // 立即生成第一个
+                        spawnObstacle();
+                    }
+
+                    updateObstacles();
+                    // 如果游戏结束，updateObstacles 内部会调用 gameOver
+                    if (state === STATE.GAMEOVER) {
+                        // 跳过后续更新
+                        render();
+                        requestAnimationFrame(gameLoop);
+                        return;
+                    }
+                    updatePlayer();
+                    updateParticles();
+
+                    // 触摸跟随
+                    if (isTouching) {
+                        player.targetX = touchX;
+                    }
+
+                } else if (state === STATE.MENU) {
+                    // 菜单时更新粒子
+                    updateParticles();
+                    // 菜单动画：玩家跟随
+                    player.x = W / 2 + Math.sin(frameCount * 0.01) * 40;
+                    player.y = H - 70 - player.radius;
+                    player.smoothX = player.x;
+                } else {
+                    // GAMEOVER 更新粒子
+                    updateParticles();
+                }
+
+                // --- 渲染 ---
+                render();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, W, H);
+
+                drawBackground();
+
+                // 画障碍物（在玩家下方）
+                drawObstacles();
+
+                // 画粒子（在玩家下方和上方混合）
+                drawParticles();
+
+                // 画玩家
+                if (state === STATE.MENU || state === STATE.PLAYING || state === STATE.GAMEOVER) {
+                    drawPlayer();
+                }
+
+                // 游戏结束时的暗色遮罩 (仅当gameover且面板显示时)
+                if (state === STATE.GAMEOVER) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.fillRect(0, 0, W, H);
+                }
+
+                // 调试信息（可选）
+                // ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                // ctx.font = '12px monospace';
+                // ctx.fillText(`obs:${obstacles.length} diff:${difficulty.toFixed(1)} rate:${spawnRate}`, 10, 30);
+            }
+
+            // ==========================================================
+            //  触摸事件
+            // ==========================================================
+            function handleTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (!touch) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                isTouching = true;
+                touchX = x;
+
+                // 如果在菜单状态，触摸可以开始（但按钮处理）
+                // 如果在游戏状态，更新目标
+                if (state === STATE.PLAYING) {
+                    player.targetX = x;
+                }
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (!touch) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                touchX = x;
+                if (state === STATE.PLAYING) {
+                    player.targetX = x;
+                }
+                // 在菜单或结束状态，触摸移动可以忽略
+            }
+
+            function handleTouchEnd(e) {
+                e.preventDefault();
+                isTouching = false;
+                // 不重置目标，让玩家停在最后位置
+            }
+
+            function handleTouchCancel(e) {
+                e.preventDefault();
+                isTouching = false;
+            }
+
+            // --- 注册触摸事件 ---
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+            canvas.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+
+            // --- 防止鼠标事件干扰 (在触摸设备上) ---
+            canvas.addEventListener('mousedown', (e) => e.preventDefault());
+            canvas.addEventListener('mousemove', (e) => e.preventDefault());
+            canvas.addEventListener('mouseup', (e) => e.preventDefault());
+
+            // ==========================================================
+            //  按钮事件
+            // ==========================================================
+            startBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startGame();
+            });
+            startBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+            restartBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startGame();
+            });
+            restartBtn.addEventListener('mousedown', (e) => e.preventDefault());
+
+            // 防止按钮点击时触发canvas事件
+            [startBtn, restartBtn].forEach(btn => {
+                btn.addEventListener('touchstart', (e) => e.stopPropagation());
+            });
+
+            // ==========================================================
+            //  初始化
+            // ==========================================================
+            function init() {
+                // 设置玩家初始位置
+                player.x = W / 2;
+                player.smoothX = W / 2;
+                player.targetX = W / 2;
+                player.y = H - 70 - player.radius;
+
+                // 显示开始面板
+                showStartPanel();
+
+                // 更新最高分显示
+                bestScoreEl.textContent = '🏅 最高纪录: ' + bestScore;
+
+                // 启动游戏循环
+                gameLoop();
+            }
+
+            // 窗口尺寸变化时更新玩家位置
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (state === STATE.MENU) {
+                    player.x = W / 2;
+                    player.smoothX = W / 2;
+                    player.targetX = W / 2;
+                }
+                player.y = H - 70 - player.radius;
+            });
+
+            // 启动
+            init();
+
+            // 防止页面滚动
+            document.addEventListener('touchmove', (e) => {
+                if (e.target === canvas || e.target.closest('#gameContainer')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            console.log('🚀 NotPC 已启动 — 仅限手机触控');
+        })();
+    </script>
+
+</body>
+</html>
