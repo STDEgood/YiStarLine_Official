@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>YiStNote · 轻松笔记</title>
+    <style>
+        /* ===== 基础重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f6f5fc;
+            --bg-secondary: #ffffff;
+            --bg-sidebar: #f0eef8;
+            --bg-input: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #5a5a7a;
+            --text-muted: #9a9ab0;
+            --border-color: #e4e2ef;
+            --accent: #7c5cfc;
+            --accent-light: #a78bfa;
+            --accent-dark: #5b3fd4;
+            --shadow: 0 8px 32px rgba(124, 92, 252, 0.10);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --font: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden;
+        }
+
+        /* ===== 滚动条美化 ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-light);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ===== 布局 ===== */
+        #app {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        /* ===== 侧边栏 ===== */
+        #sidebar {
+            width: 300px;
+            min-width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            transition: transform var(--transition), width var(--transition);
+            z-index: 10;
+            position: relative;
+        }
+
+        #sidebar-header {
+            padding: 20px 20px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #sidebar-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        #sidebar-header .brand .logo {
+            font-size: 26px;
+        }
+        #sidebar-header .brand .yi {
+            color: var(--accent);
+        }
+
+        #sidebar-header .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        #sidebar-header .actions button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        #sidebar-header .actions button:hover {
+            background: rgba(124, 92, 252, 0.08);
+        }
+        #sidebar-header .actions button:active {
+            transform: scale(0.88);
+        }
+        #sidebar-header .actions button.primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(124, 92, 252, 0.25);
+        }
+        #sidebar-header .actions button.primary:hover {
+            background: var(--accent-dark);
+            box-shadow: 0 4px 24px rgba(124, 92, 252, 0.35);
+        }
+        #sidebar-header .actions button.primary:active {
+            transform: scale(0.88);
+        }
+
+        /* 搜索框 */
+        #search-box {
+            padding: 12px 20px 8px;
+            flex-shrink: 0;
+        }
+        #search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 38px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-secondary);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border var(--transition), box-shadow var(--transition);
+            font-family: var(--font);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239a9ab0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 16px;
+        }
+        #search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+        }
+        #search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 笔记列表 */
+        #note-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px 20px;
+        }
+
+        .note-item {
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            background: transparent;
+            border: 1px solid transparent;
+            position: relative;
+            touch-action: manipulation;
+        }
+        .note-item:hover {
+            background: rgba(124, 92, 252, 0.04);
+        }
+        .note-item:active {
+            transform: scale(0.97);
+        }
+        .note-item.active {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+            box-shadow: var(--shadow);
+        }
+        .note-item.active .note-title {
+            color: var(--accent);
+        }
+
+        .note-item .note-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .note-item .note-preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+        .note-item .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .note-item .note-meta .time {
+            letter-spacing: 0.3px;
+        }
+        .note-item .note-meta .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: all var(--transition);
+            touch-action: manipulation;
+            opacity: 0;
+        }
+        .note-item:hover .note-meta .delete-btn,
+        .note-item.active .note-meta .delete-btn {
+            opacity: 0.6;
+        }
+        .note-item .note-meta .delete-btn:hover {
+            opacity: 1;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+        }
+        .note-item .note-meta .delete-btn:active {
+            transform: scale(0.85);
+        }
+
+        .empty-notes {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .empty-notes .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+        .empty-notes .hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* ===== 主编辑区 ===== */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #editor-header {
+            padding: 16px 24px 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: var(--bg-primary);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        #editor-header .title-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        #editor-header .title-area .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            touch-action: manipulation;
+        }
+        #editor-header .title-area .menu-toggle:active {
+            transform: scale(0.85);
+        }
+
+        #note-title-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            outline: none;
+            font-family: var(--font);
+            min-width: 60px;
+            padding: 4px 0;
+        }
+        #note-title-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        #editor-header .editor-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        #editor-header .editor-actions button {
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        #editor-header .editor-actions button:hover {
+            background: rgba(124, 92, 252, 0.06);
+            color: var(--accent);
+        }
+        #editor-header .editor-actions button:active {
+            transform: scale(0.85);
+        }
+        #editor-header .editor-actions button.danger:hover {
+            background: rgba(239, 68, 68, 0.08);
+            color: #ef4444;
+        }
+
+        /* 编辑器主体 */
+        #editor-body {
+            flex: 1;
+            padding: 20px 24px 30px;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+            margin: 0 16px 16px 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        #note-content-input {
+            width: 100%;
+            height: 100%;
+            min-height: 180px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-family: var(--font);
+            background: transparent;
+            padding: 4px 0;
+        }
+        #note-content-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* 空状态 - 编辑器 */
+        .editor-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+        }
+        .editor-empty .icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .editor-empty .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .editor-empty .desc {
+            font-size: 14px;
+            opacity: 0.6;
+            line-height: 1.6;
+        }
+
+        /* ===== 响应式 ===== */
+
+        /* 平板及小屏电脑 */
+        @media (max-width: 900px) {
+            #sidebar {
+                width: 260px;
+                min-width: 240px;
+            }
+        }
+
+        /* 手机端 */
+        @media (max-width: 640px) {
+            #sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 85%;
+                max-width: 320px;
+                height: 100%;
+                transform: translateX(-100%);
+                box-shadow: 4px 0 40px rgba(0, 0, 0, 0.08);
+                border-right: none;
+                z-index: 20;
+                background: var(--bg-secondary);
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+
+            #sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                z-index: 15;
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            #sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+
+            #editor-header .title-area .menu-toggle {
+                display: flex;
+            }
+
+            #editor-header {
+                padding: 12px 16px 10px;
+            }
+            #note-title-input {
+                font-size: 17px;
+            }
+
+            #editor-body {
+                margin: 0 12px 12px 12px;
+                padding: 16px 18px 24px;
+                border-radius: var(--radius-sm);
+            }
+            #note-content-input {
+                font-size: 15px;
+                min-height: 120px;
+            }
+
+            .note-item {
+                padding: 12px 14px;
+            }
+            .note-item .note-title {
+                font-size: 14px;
+            }
+            .note-item .note-preview {
+                font-size: 12px;
+            }
+
+            #sidebar-header {
+                padding: 16px 16px 10px;
+            }
+            #sidebar-header .brand {
+                font-size: 17px;
+            }
+            #search-box {
+                padding: 8px 16px 6px;
+            }
+            #search-box input {
+                font-size: 13px;
+                padding: 8px 14px 8px 34px;
+                background-size: 14px;
+                background-position: 10px center;
+            }
+
+            #editor-header .editor-actions button {
+                width: 34px;
+                height: 34px;
+                font-size: 16px;
+            }
+
+            .editor-empty .icon {
+                font-size: 40px;
+            }
+            .editor-empty .title {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #sidebar {
+                width: 92%;
+                max-width: 300px;
+            }
+            #note-title-input {
+                font-size: 15px;
+            }
+            #editor-body {
+                padding: 12px 14px 20px;
+            }
+            #note-content-input {
+                font-size: 14px;
+            }
+        }
+
+        /* ===== 工具类 ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== 淡入动画 ===== */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .note-item {
+            animation: fadeSlideUp 0.3s ease forwards;
+        }
+
+        /* ===== 选中高亮 ===== */
+        .highlight {
+            background: rgba(124, 92, 252, 0.08);
+            border-radius: 4px;
+            padding: 0 2px;
+        }
+
+        /* ===== Toast ===== */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--text-primary);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            font-family: var(--font);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(26, 26, 46, 0.92);
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 暗色模式支持 (根据系统) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #12121e;
+                --bg-secondary: #1a1a2e;
+                --bg-sidebar: #16162a;
+                --bg-input: #1a1a2e;
+                --text-primary: #ececf4;
+                --text-secondary: #b0b0cc;
+                --text-muted: #6a6a8a;
+                --border-color: #2a2a44;
+                --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            }
+            #sidebar-header .brand .yi {
+                color: var(--accent-light);
+            }
+            #search-box input {
+                background-color: var(--bg-input);
+                color: var(--text-primary);
+                border-color: var(--border-color);
+            }
+            #search-box input:focus {
+                border-color: var(--accent-light);
+            }
+            .note-item.active {
+                background: rgba(124, 92, 252, 0.06);
+                border-color: rgba(124, 92, 252, 0.15);
+            }
+            #editor-body {
+                background: var(--bg-secondary);
+                border-color: var(--border-color);
+            }
+            #editor-header {
+                background: var(--bg-primary);
+                border-color: var(--border-color);
+            }
+            #sidebar {
+                background: var(--bg-sidebar);
+                border-color: var(--border-color);
+            }
+            @media (max-width: 640px) {
+                #sidebar {
+                    background: var(--bg-secondary);
+                }
+            }
+            #toast {
+                background: rgba(30, 30, 50, 0.95);
+                color: #ececf4;
+            }
+            .note-item .note-meta .delete-btn:hover {
+                background: rgba(239, 68, 68, 0.12);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 应用 ===== -->
+    <div id="app">
+
+        <!-- 侧边栏遮罩 (手机) -->
+        <div id="sidebar-overlay"></div>
+
+        <!-- ===== 侧边栏 ===== -->
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <div class="brand">
+                    <span class="logo">📒</span>
+                    <span><span class="yi">Yi</span>StNote</span>
+                </div>
+                <div class="actions">
+                    <button id="new-note-btn" class="primary" title="新建笔记 (Ctrl+N)">＋</button>
+                </div>
+            </div>
+
+            <div id="search-box">
+                <input type="text" id="search-input" placeholder="搜索笔记..." aria-label="搜索笔记">
+            </div>
+
+            <div id="note-list">
+                <!-- 由 JS 渲染 -->
+            </div>
+        </aside>
+
+        <!-- ===== 主编辑区 ===== -->
+        <main id="main">
+
+            <div id="editor-header">
+                <div class="title-area">
+                    <button class="menu-toggle" id="menu-toggle" aria-label="切换侧边栏">☰</button>
+                    <input type="text" id="note-title-input" placeholder="笔记标题..." aria-label="笔记标题">
+                </div>
+                <div class="editor-actions">
+                    <button id="delete-note-btn" class="danger" title="删除笔记 (Delete)">🗑</button>
+                    <button id="save-status" title="已自动保存" style="font-size:14px; cursor:default; opacity:0.4;">✓</button>
+                </div>
+            </div>
+
+            <div id="editor-body">
+                <textarea id="note-content-input" placeholder="开始记录你的想法……&#10;支持纯文本，轻松书写。"></textarea>
+                <div id="editor-empty" class="editor-empty">
+                    <span class="icon">📝</span>
+                    <div class="title">选择或创建一篇笔记</div>
+                    <div class="desc">点击左侧笔记列表，或点击「＋」新建</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div id="toast"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // =============================================================
+            //  YiStNote · 轻量笔记
+            //  特性：本地存储 · 自动保存 · 搜索 · 响应式
+            // =============================================================
+
+            // ---- DOM 引用 ----
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const menuToggle = document.getElementById('menu-toggle');
+            const noteList = document.getElementById('note-list');
+            const searchInput = document.getElementById('search-input');
+            const newNoteBtn = document.getElementById('new-note-btn');
+            const titleInput = document.getElementById('note-title-input');
+            const contentInput = document.getElementById('note-content-input');
+            const deleteBtn = document.getElementById('delete-note-btn');
+            const saveStatus = document.getElementById('save-status');
+            const editorEmpty = document.getElementById('editor-empty');
+            const toast = document.getElementById('toast');
+
+            // ---- 状态 ----
+            let notes = [];
+            let currentId = null;
+            let searchQuery = '';
+            let saveTimeout = null;
+            let toastTimer = null;
+
+            // ---- 存储键 ----
+            const STORAGE_KEY = 'yistnote_notes';
+
+            // ---- 工具 ----
+            function uuid() {
+                return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+            }
+
+            function formatTime(ts) {
+                const d = new Date(ts);
+                const now = new Date();
+                const isToday = d.toDateString() === now.toDateString();
+                if (isToday) {
+                    return '今天 ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                }
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (d.toDateString() === yesterday.toDateString()) {
+                    return '昨天 ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                }
+                return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+            }
+
+            function getPreview(text, maxLen) {
+                maxLen = maxLen || 60;
+                if (!text) return '空笔记';
+                const clean = text.replace(/\n/g, ' ').trim();
+                return clean.length > maxLen ? clean.slice(0, maxLen) + '…' : clean;
+            }
+
+            // ---- Toast ----
+            function showToast(msg, duration) {
+                duration = duration || 1800;
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, duration);
+            }
+
+            // ---- 存储 ----
+            function loadNotes() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEY);
+                    if (data) {
+                        notes = JSON.parse(data);
+                        // 兼容旧数据
+                        notes = notes.filter(n => n && typeof n === 'object' && n.id);
+                        return;
+                    }
+                } catch (e) { /* ignore */ }
+                // 默认示例笔记
+                notes = [{
+                    id: uuid(),
+                    title: '欢迎使用 YiStNote 🎉',
+                    content: '这是一个轻量级笔记工具。\n\n• 自动保存，无需点击保存按钮\n• 支持搜索过滤\n• 手机 / 电脑 自适应\n• 数据存储在本地浏览器中\n\n开始记录你的想法吧！',
+                    updated: Date.now(),
+                }];
+                saveNotes();
+            }
+
+            function saveNotes() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+                } catch (e) { /* ignore */ }
+                updateSaveStatus(true);
+            }
+
+            function updateSaveStatus(saved) {
+                if (saved) {
+                    saveStatus.textContent = '✓';
+                    saveStatus.style.opacity = '0.4';
+                    saveStatus.style.color = 'var(--text-muted)';
+                } else {
+                    saveStatus.textContent = '⋯';
+                    saveStatus.style.opacity = '0.8';
+                    saveStatus.style.color = 'var(--accent)';
+                }
+            }
+
+            // ---- 笔记 CRUD ----
+            function createNote(title, content) {
+                const note = {
+                    id: uuid(),
+                    title: title || '无标题笔记',
+                    content: content || '',
+                    updated: Date.now(),
+                };
+                notes.unshift(note);
+                saveNotes();
+                return note;
+            }
+
+            function updateNote(id, title, content) {
+                const note = notes.find(n => n.id === id);
+                if (!note) return;
+                note.title = title !== undefined ? title : note.title;
+                note.content = content !== undefined ? content : note.content;
+                note.updated = Date.now();
+                saveNotes();
+                return note;
+            }
+
+            function deleteNote(id) {
+                const idx = notes.findIndex(n => n.id === id);
+                if (idx === -1) return false;
+                notes.splice(idx, 1);
+                saveNotes();
+                return true;
+            }
+
+            function getNote(id) {
+                return notes.find(n => n.id === id);
+            }
+
+            // ---- 当前笔记操作 ----
+            function setCurrentNote(id) {
+                if (currentId === id) return;
+                // 保存当前笔记
+                saveCurrentNote();
+                currentId = id;
+                renderNoteList();
+                loadNoteToEditor(id);
+                closeSidebar();
+            }
+
+            function saveCurrentNote() {
+                if (!currentId) return;
+                const title = titleInput.value.trim();
+                const content = contentInput.value;
+                const note = getNote(currentId);
+                if (!note) return;
+                // 如果标题为空，使用"无标题笔记"
+                const finalTitle = title || '无标题笔记';
+                if (note.title !== finalTitle || note.content !== content) {
+                    updateNote(currentId, finalTitle, content);
+                    renderNoteList();
+                }
+            }
+
+            function loadNoteToEditor(id) {
+                const note = getNote(id);
+                if (!note) {
+                    // 没有笔记，显示空状态
+                    titleInput.value = '';
+                    contentInput.value = '';
+                    editorEmpty.style.display = 'flex';
+                    titleInput.style.display = 'none';
+                    contentInput.style.display = 'none';
+                    return;
+                }
+                titleInput.value = note.title || '';
+                contentInput.value = note.content || '';
+                editorEmpty.style.display = 'none';
+                titleInput.style.display = 'block';
+                contentInput.style.display = 'block';
+                // 更新高亮
+                renderNoteList();
+            }
+
+            function clearEditor() {
+                titleInput.value = '';
+                contentInput.value = '';
+                editorEmpty.style.display = 'flex';
+                titleInput.style.display = 'none';
+                contentInput.style.display = 'none';
+                currentId = null;
+                renderNoteList();
+            }
+
+            // ---- 新建笔记 ----
+            function createNewNote() {
+                saveCurrentNote();
+                const note = createNote('新笔记', '');
+                setCurrentNote(note.id);
+                // 聚焦标题
+                setTimeout(() => {
+                    titleInput.focus();
+                    titleInput.select();
+                }, 100);
+                showToast('📒 已创建新笔记');
+            }
+
+            // ---- 删除笔记 ----
+            function deleteCurrentNote() {
+                if (!currentId) return;
+                const note = getNote(currentId);
+                if (!note) return;
+                if (confirm(`确定要删除「${note.title || '无标题'}」吗？`)) {
+                    deleteNote(currentId);
+                    clearEditor();
+                    renderNoteList();
+                    showToast('🗑 已删除笔记');
+                }
+            }
+
+            // ---- 渲染列表 ----
+            function renderNoteList() {
+                const query = searchQuery.trim().toLowerCase();
+                let filtered = notes;
+                if (query) {
+                    filtered = notes.filter(n =>
+                        (n.title || '').toLowerCase().includes(query) ||
+                        (n.content || '').toLowerCase().includes(query)
+                    );
+                }
+
+                if (filtered.length === 0) {
+                    noteList.innerHTML = `
+                        <div class="empty-notes">
+                            <span class="big-icon">${query ? '🔍' : '📭'}</span>
+                            ${query ? '没有找到匹配的笔记' : '还没有笔记，点击「＋」新建'}
+                            <div class="hint">${query ? '试试其他关键词' : '开始记录你的第一个想法吧'}</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                for (const note of filtered) {
+                    const active = note.id === currentId ? 'active' : '';
+                    const preview = getPreview(note.content, 50);
+                    const time = formatTime(note.updated);
+                    // 高亮搜索词
+                    let displayTitle = note.title || '无标题';
+                    if (query) {
+                        const re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                        displayTitle = displayTitle.replace(re, match => `<span class="highlight">${match}</span>`);
+                    }
+                    html += `
+                        <div class="note-item ${active}" data-id="${note.id}">
+                            <div class="note-title">${displayTitle}</div>
+                            <div class="note-preview">${preview}</div>
+                            <div class="note-meta">
+                                <span class="time">${time}</span>
+                                <button class="delete-btn" data-id="${note.id}" title="删除">✕</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                noteList.innerHTML = html;
+
+                // 事件绑定
+                noteList.querySelectorAll('.note-item').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        if (e.target.closest('.delete-btn')) return;
+                        const id = el.dataset.id;
+                        if (id) setCurrentNote(id);
+                    });
+                });
+
+                noteList.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = btn.dataset.id;
+                        if (!id) return;
+                        const note = getNote(id);
+                        if (!note) return;
+                        if (confirm(`删除「${note.title || '无标题'}」？`)) {
+                            if (currentId === id) {
+                                clearEditor();
+                            }
+                            deleteNote(id);
+                            renderNoteList();
+                            showToast('🗑 已删除');
+                        }
+                    });
+                });
+            }
+
+            // ---- 搜索 ----
+            function handleSearch() {
+                searchQuery = searchInput.value;
+                renderNoteList();
+            }
+
+            // ---- 自动保存 ----
+            function autoSave() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveCurrentNote();
+                    updateSaveStatus(true);
+                }, 400);
+                updateSaveStatus(false);
+            }
+
+            // ---- 侧边栏控制 (手机) ----
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+
+            function toggleSidebar() {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+
+            // ---- 键盘快捷键 ----
+            function handleKeydown(e) {
+                // Ctrl+N 新建
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    createNewNote();
+                    return;
+                }
+                // Delete 删除 (在编辑器内不触发)
+                if (e.key === 'Delete' && !e.target.closest('textarea') && !e.target.closest('input')) {
+                    if (currentId) {
+                        e.preventDefault();
+                        deleteCurrentNote();
+                    }
+                    return;
+                }
+                // Escape 关闭侧边栏
+                if (e.key === 'Escape') {
+                    closeSidebar();
+                }
+                // Ctrl+S 保存 (只是提示已自动保存)
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveCurrentNote();
+                    showToast('💾 已保存');
+                }
+            }
+
+            // ---- 初始化 ----
+            function init() {
+                loadNotes();
+
+                // 如果有笔记，选中第一个
+                if (notes.length > 0) {
+                    setCurrentNote(notes[0].id);
+                } else {
+                    clearEditor();
+                    renderNoteList();
+                }
+
+                // ---- 事件绑定 ----
+
+                // 新建笔记
+                newNoteBtn.addEventListener('click', createNewNote);
+                newNoteBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    createNewNote();
+                });
+
+                // 搜索
+                searchInput.addEventListener('input', handleSearch);
+
+                // 标题 & 内容输入 -> 自动保存
+                titleInput.addEventListener('input', autoSave);
+                contentInput.addEventListener('input', autoSave);
+
+                // 删除按钮
+                deleteBtn.addEventListener('click', deleteCurrentNote);
+
+                // 侧边栏切换 (手机)
+                menuToggle.addEventListener('click', toggleSidebar);
+                menuToggle.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    toggleSidebar();
+                });
+                overlay.addEventListener('click', closeSidebar);
+                overlay.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    closeSidebar();
+                });
+
+                // 键盘快捷键
+                document.addEventListener('keydown', handleKeydown);
+
+                // 窗口尺寸变化 - 关闭侧边栏 (宽屏自动关闭)
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth > 640) {
+                        closeSidebar();
+                    }
+                });
+
+                // 点击外部关闭侧边栏 (桌面端点击主区域)
+                document.getElementById('main').addEventListener('click', () => {
+                    if (window.innerWidth <= 640 && sidebar.classList.contains('open')) {
+                        closeSidebar();
+                    }
+                });
+
+                // 离开页面时保存
+                window.addEventListener('beforeunload', () => {
+                    saveCurrentNote();
+                });
+
+                // 触控优化 - 防止滚动时误触
+                noteList.addEventListener('touchstart', () => {}, { passive: true });
+
+                console.log('📒 YiStNote 已加载 · 轻松笔记');
+            }
+
+            // DOM 准备好后启动
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
