@@ -1,26 +1,300 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YiStarLine Studio</title>
-    <link rel="icon" type="image/png" href="ico.png">
-    <meta name="theme-color" content="#000064">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IntrFilesHub · 局域网文件共享工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f8f9fc;
+            color: #1e2a3a;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            padding: 48px 56px 56px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            padding-bottom: 32px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .header .logo {
+            font-size: 48px;
+            font-weight: 400;
+            color: #1a73e8;
+            letter-spacing: -0.5px;
+        }
+
+        .header .tagline {
+            font-size: 18px;
+            color: #5f6368;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .header .badge {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 4px 18px;
+            border-radius: 30px;
+            margin-top: 12px;
+        }
+
+        /* 下载区域 */
+        .download-section {
+            text-align: center;
+            padding: 36px 0 28px;
+        }
+
+        .download-section .main-btn {
+            display: inline-block;
+            background: #1a73e8;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 500;
+            padding: 16px 48px;
+            border-radius: 40px;
+            text-decoration: none;
+            box-shadow: 0 4px 16px rgba(26, 115, 232, 0.2);
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+
+        .download-section .main-btn:hover {
+            box-shadow: 0 6px 24px rgba(26, 115, 232, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .download-section .main-btn:active {
+            transform: scale(0.97);
+        }
+
+        .download-section .pwd-hint {
+            font-size: 14px;
+            color: #5f6368;
+            margin-top: 14px;
+        }
+
+        .download-section .pwd-hint code {
+            background: #f1f3f4;
+            padding: 2px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #1a73e8;
+        }
+
+        /* 特性网格 */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            padding: 32px 0 20px;
+        }
+
+        .feature-card {
+            background: #fafbfc;
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            border: 1px solid #f1f3f4;
+            transition: border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: #d2e3fc;
+        }
+
+        .feature-card .icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .feature-card h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1e2a3a;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+
+        /* 关于 */
+        .about {
+            padding: 28px 0 12px;
+            border-top: 2px solid #f1f3f4;
+            margin-top: 12px;
+        }
+
+        .about h2 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1e2a3a;
+            margin-bottom: 12px;
+        }
+
+        .about p {
+            color: #3d4a5a;
+            font-size: 15px;
+            max-width: 720px;
+        }
+
+        .about ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 12px;
+        }
+
+        .about ul li {
+            padding: 4px 0;
+            color: #3d4a5a;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .about ul li::before {
+            content: "•";
+            color: #1a73e8;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding-top: 28px;
+            margin-top: 20px;
+            border-top: 2px solid #f1f3f4;
+            font-size: 14px;
+            color: #8a9aa8;
+        }
+
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式 */
+        @media (max-width: 700px) {
+            .container {
+                padding: 28px 20px 32px;
+            }
+            .header .logo {
+                font-size: 36px;
+            }
+            .download-section .main-btn {
+                font-size: 18px;
+                padding: 14px 32px;
+            }
+            .features {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 460px) {
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <font size="10"><font color="blue">YiStarLine Studio</font></font>
+    <div class="container">
 
-    <p> 人与AI结合体--YiStarLine </p>
-    <font size="6"><font color="red">YiStarLine News</font></font>
-    <p>UselessOS上线</p>
-    <p>Time 2026/7/2</p>
-    <font size="6">我们涉及了什么领域？<br/><font size="3">我们涉及了游戏 人工智能 电脑工具等多个领域，致力于提供完善的生态链与稳定良好的体验</font></font> 
+        <!-- 头部 -->
+        <header class="header">
+            <div class="logo">📡 IntrFilesHub</div>
+            <div class="tagline">局域网文件共享 · 极速传输</div>
+            <div class="badge">⚡ 开箱即用 · 轻量免费</div>
+        </header>
 
-    <!--游戏-->
-    <br/><button><a href="game.html" target="_blank">点击查看YiStGame</a></button>
+        <!-- 下载 -->
+        <section class="download-section">
+            <a class="main-btn" href="https://wwaoy.lanzoue.com/b0188lbggd" target="_blank">
+                ⬇ 下载 IntrFilesHub
+            </a>
+            <div class="pwd-hint">
+                访问密码：<code>3835</code>
+            </div>
+        </section>
 
-    <!--UselessOS-->
-    <br/><button><a href="UselessOS.html" target="_blank">体验我们的UselessOS</button>
+        <!-- 特性 -->
+        <section class="features">
+            <div class="feature-card">
+                <span class="icon">📤</span>
+                <h3>拖拽上传</h3>
+                <p>支持拖拽或点击选择文件，上传进度实时可见</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">📥</span>
+                <h3>一键下载</h3>
+                <p>局域网内任意设备访问页面即可下载，无需额外客户端</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">👥</span>
+                <h3>下载计数</h3>
+                <p>自动记录每个文件的下载次数，轻松掌握热度</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">📦</span>
+                <h3>单文件 Exe</h3>
+                <p>双击即可运行，无需安装 Python 或任何依赖</p>
+            </div>
+        </section>
 
+        <!-- 关于 -->
+        <section class="about">
+            <h2>📖 关于 IntrFilesHub</h2>
+            <p>
+                IntrFilesHub 是一款专为局域网环境设计的轻量级文件共享工具。
+                无需复杂配置，启动后同一网络下的电脑、手机、平板均可通过浏览器
+                访问并上传 / 下载文件，非常适合办公室、教室或家庭内快速传递资料。
+            </p>
+            <ul>
+                <li>纯 Python + Flask 开发，单文件 Exe 封装</li>
+                <li>上传 / 下载双 Tab 分离，功能清晰</li>
+                <li>支持文件删除、清空全部、下载次数统计</li>
+                <li>扁平化 UI，所有按钮带水波纹反馈</li>
+            </ul>
+        </section>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>
+                © 2026 IntrFilesHub · 
+                <a href="https://wwaoy.lanzoue.com/b0188lbggd" target="_blank">蓝奏云下载</a> ·
+                密码 <strong>3835</strong>
+            </p>
+        </footer>
+
+    </div>
 </body>
 </html>
