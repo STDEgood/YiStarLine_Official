@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WorldForge</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--panel:#101012;--panel2:#16161a;--panel3:#1c1c21;--panel4:#232329;
+  --line:#232329;--line2:#2e2e36;
+  --fg:#ededed;--fg2:#a1a1aa;--fg3:#6b6b73;
+  --acc:#5b6ad0;--acc-h:#6a78dc;
+  --warn:#e05353;--ok:#3fb950;--gold:#d4a72c;
+  --r:6px;
+}
+[data-theme="light"]{
+  --bg:#f7f7f8;--panel:#ffffff;--panel2:#fafafa;--panel3:#f3f3f5;--panel4:#e8e8ec;
+  --line:#e5e5e7;--line2:#d4d4d8;
+  --fg:#18181b;--fg2:#52525b;--fg3:#a1a1aa;
+  --acc:#4f5bd5;--acc-h:#4048b8;
+  --warn:#d13030;--ok:#2a9a48;--gold:#b8860b;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:13px/1.55 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;background:var(--panel2);border:1px solid var(--line);color:var(--fg);border-radius:var(--r);padding:6px 9px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+input[type=color]{height:30px;padding:2px;cursor:pointer}
+input[type=checkbox]{width:auto;accent-color:var(--acc)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+select option{background:var(--panel2);color:var(--fg)}
+
+#app{display:flex;height:100vh}
+
+/* ═══════ 侧栏 ═══════ */
+#side{width:240px;flex:0 0 240px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+.side-top{padding:14px 14px 10px;display:flex;align-items:center;gap:8px}
+.side-top .logo{font-size:14px;font-weight:600;letter-spacing:-0.2px;flex:1}
+.side-add{width:24px;height:24px;border-radius:4px;color:var(--fg2);font-size:16px;display:grid;place-items:center;transition:.1s}
+.side-add:hover{background:var(--panel3);color:var(--fg)}
+.side-label{padding:10px 14px 6px;font-size:10.5px;font-weight:500;color:var(--fg3);letter-spacing:0.6px;text-transform:uppercase}
+#tree{flex:1;overflow-y:auto;padding:0 8px 8px}
+.tnode{display:flex;align-items:center;gap:4px;padding:5px 8px;border-radius:5px;cursor:pointer;color:var(--fg2);font-size:12.5px;transition:.1s;user-select:none}
+.tnode:hover{background:var(--panel3);color:var(--fg)}
+.tnode.active{background:var(--panel3);color:var(--fg);font-weight:500}
+.tnode-arrow{width:14px;height:14px;display:grid;place-items:center;font-size:9px;color:var(--fg3);flex-shrink:0}
+.tnode-arrow.blank{visibility:hidden}
+.tnode-icon{font-size:12px;flex-shrink:0}
+.tnode-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tnode-mini{opacity:0;padding:0 4px;font-size:13px;color:var(--fg3);border-radius:3px;line-height:1}
+.tnode:hover .tnode-mini{opacity:.7}
+.tnode-mini:hover{background:var(--panel4);color:var(--warn)}
+.side-bottom{padding:8px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.side-btn{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:5px;color:var(--fg2);font-size:12.5px;width:100%;text-align:left}
+.side-btn:hover{background:var(--panel3);color:var(--fg)}
+.side-btn.on{background:var(--panel3);color:var(--fg);font-weight:500}
+.side-btn svg{flex-shrink:0}
+
+/* ═══════ 主区 ═══════ */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);flex-shrink:0;background:var(--panel)}
+.topbar-title{font-size:14px;font-weight:600}
+.topbar-meta{font-size:11.5px;color:var(--fg3);margin-left:auto;display:flex;gap:14px;align-items:center}
+.nav{display:flex;gap:2px;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--panel);flex-shrink:0;overflow-x:auto}
+.nav button{padding:6px 12px;border-radius:5px;font-size:12.5px;color:var(--fg2);white-space:nowrap;transition:.1s}
+.nav button:hover{background:var(--panel3);color:var(--fg)}
+.nav button.on{background:var(--panel3);color:var(--fg);font-weight:500}
+.content{flex:1;overflow:auto;min-height:0;background:var(--bg);position:relative}
+.content.no-scroll{overflow:hidden}
+
+/* 页面 */
+.page{padding:32px 40px;max-width:1000px;margin:0 auto}
+.page-title{font-size:20px;font-weight:600;letter-spacing:-0.4px;margin-bottom:4px}
+.page-desc{font-size:12.5px;color:var(--fg2);margin-bottom:28px}
+.section{margin-bottom:28px}
+.section-title{font-size:11px;font-weight:600;color:var(--fg3);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+.card+.card{margin-top:10px}
+.form-row{margin-bottom:14px}
+.form-row:last-child{margin-bottom:0}
+.form-row>label{display:block;font-size:11.5px;color:var(--fg2);margin-bottom:6px;font-weight:500}
+.form-help{font-size:11px;color:var(--fg3);margin-top:5px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.stat{background:var(--panel);padding:16px 18px}
+.stat-v{font-size:22px;font-weight:600;letter-spacing:-0.5px;line-height:1.2}
+.stat-l{font-size:11px;color:var(--fg3);margin-top:3px}
+
+/* 按钮 */
+.btn{padding:6px 14px;background:var(--panel3);color:var(--fg);border-radius:5px;font-size:12.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px;justify-content:center;transition:.1s}
+.btn:hover{background:var(--panel4)}
+.btn.primary{background:var(--acc);color:#fff}
+.btn.primary:hover{background:var(--acc-h)}
+.btn.danger{color:var(--warn)}
+.btn.danger:hover{background:rgba(224,83,83,.12)}
+.btn.sm{padding:4px 10px;font-size:11.5px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* 空状态 */
+.empty{padding:80px 40px;text-align:center;color:var(--fg3)}
+.empty-title{font-size:14px;color:var(--fg2);margin-bottom:6px;font-weight:500}
+.empty-desc{font-size:12.5px;line-height:1.7}
+
+/* ═══════ 画板地图 ═══════ */
+.canvas-page{display:flex;flex-direction:column;height:100%}
+.canvas-tools{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);align-items:center;flex-shrink:0;flex-wrap:wrap}
+.tool-group{display:flex;gap:2px;padding:2px;background:var(--panel2);border-radius:6px}
+.tool-group button{padding:5px 11px;border-radius:4px;font-size:12px;color:var(--fg2);display:flex;align-items:center;gap:5px;transition:.1s}
+.tool-group button:hover{color:var(--fg)}
+.tool-group button.on{background:var(--panel3);color:var(--fg);font-weight:500}
+.tool-sep{width:1px;height:20px;background:var(--line);margin:0 6px}
+.tool-label{font-size:11.5px;color:var(--fg3);margin-right:2px}
+.color-pick{width:28px;height:26px;padding:2px;border-radius:4px;cursor:pointer}
+.width-slider{width:80px}
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:#f5f2ec}
+[data-theme="dark"] .canvas-wrap{background:#e8e5e0}
+#board{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#board.grab{cursor:grab}
+#board.grabbing{cursor:grabbing}
+.canvas-info{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.7);color:#fff;padding:5px 10px;border-radius:4px;font-size:11px;font-family:ui-monospace,monospace}
+.canvas-hint{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.7);color:#fff;padding:5px 10px;border-radius:4px;font-size:11px}
+
+/* ═══════ 列表 / 编辑器 ═══════ */
+.two-col{display:flex;height:100%;overflow:hidden}
+.list-pane{width:240px;flex:0 0 240px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;overflow:hidden}
+.list-h{padding:10px;border-bottom:1px solid var(--line);display:flex;gap:6px;flex-shrink:0}
+.list-h select{flex:1;font-size:12px}
+.list-body{flex:1;overflow-y:auto;padding:6px 8px}
+.li{padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12.5px;display:flex;align-items:center;gap:8px;color:var(--fg2);transition:.1s}
+.li:hover{background:var(--panel3);color:var(--fg)}
+.li.active{background:var(--panel3);color:var(--fg);font-weight:500}
+.li-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-del{opacity:0;color:var(--fg3);font-size:13px;padding:0 3px;border-radius:3px;line-height:1}
+.li:hover .li-del{opacity:1}
+.li-del:hover{color:var(--warn)}
+.li-group{padding:10px 10px 4px;font-size:10.5px;color:var(--fg3);letter-spacing:0.6px;text-transform:uppercase}
+.edit-pane{flex:1;overflow-y:auto;min-width:0;padding:32px 40px}
+.edit-inner{max-width:800px;margin:0 auto}
+
+/* ═══════ OC 卡片 ═══════ */
+.oc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:24px 32px}
+.oc-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;cursor:pointer;transition:.12s}
+.oc-card:hover{border-color:var(--line2);transform:translateY(-1px)}
+.oc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.oc-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:600;color:#fff;overflow:hidden;flex-shrink:0}
+.oc-avatar img{width:100%;height:100%;object-fit:cover}
+.oc-name{font-size:13.5px;font-weight:600;margin-bottom:2px}
+.oc-meta{font-size:11px;color:var(--fg3)}
+.oc-desc{font-size:12px;color:var(--fg2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ═══════ 时间轴 ═══════ */
+.timeline{padding:24px 40px;max-width:800px;margin:0 auto}
+.tl-item{border-left:2px solid var(--line);padding:0 0 24px 20px;position:relative}
+.tl-item::before{content:'';position:absolute;left:-5px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--panel)}
+.tl-item.diary::before{background:var(--acc)}
+.tl-item.event::before{background:var(--gold)}
+.tl-item.disaster::before{background:var(--warn)}
+.tl-item.weather::before{background:var(--ok)}
+.tl-item:last-child{border-left-color:transparent;padding-bottom:0}
+.tl-time{font-size:11px;color:var(--fg3);font-family:ui-monospace,monospace;margin-bottom:4px}
+.tl-title{font-size:13.5px;font-weight:600;margin-bottom:6px}
+.tl-body{font-size:12.5px;color:var(--fg2);line-height:1.75;white-space:pre-wrap}
+.tl-tag{display:inline-block;font-size:10.5px;color:var(--fg3);background:var(--panel3);padding:1px 7px;border-radius:10px;margin-right:6px}
+
+/* ═══════ AI ═══════ */
+.ai-msg{padding:12px 16px;border-radius:8px;margin-bottom:10px;font-size:13px;line-height:1.75;white-space:pre-wrap;word-break:break-word;max-width:85%}
+.ai-msg.user{background:var(--acc);color:#fff;margin-left:auto}
+.ai-msg.assistant{background:var(--panel);border:1px solid var(--line)}
+.ai-msg.sys{background:transparent;color:var(--fg3);font-size:11.5px;max-width:100%;text-align:center;padding:4px}
+.ai-act{margin-top:6px;padding:5px 10px;border-radius:5px;font-size:11.5px;font-family:ui-monospace,monospace}
+.ai-act.ok{background:rgba(63,185,80,.1);color:var(--ok);border:1px solid rgba(63,185,80,.2)}
+.ai-act.err{background:rgba(224,83,83,.1);color:var(--warn);border:1px solid rgba(224,83,83,.2)}
+.chat-input{display:flex;gap:8px;padding:14px 24px;border-top:1px solid var(--line);background:var(--panel);flex-shrink:0}
+.chat-input textarea{flex:1;resize:none;min-height:38px;max-height:140px;font-size:13px}
+
+/* ═══════ 右键菜单 ═══════ */
+#ctxmenu{position:fixed;display:none;z-index:9000;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:5px;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:ctxIn .1s ease}
+@keyframes ctxIn{from{opacity:0;transform:scale(.96) translateY(-4px)}to{opacity:1;transform:none}}
+.ctx-item{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:5px;font-size:12.5px;cursor:pointer;color:var(--fg)}
+.ctx-item:hover{background:var(--acc);color:#fff}
+.ctx-item.disabled{opacity:.35;cursor:not-allowed}
+.ctx-item.disabled:hover{background:none;color:var(--fg)}
+.ctx-sep{height:1px;background:var(--line);margin:4px 6px}
+.ctx-title{padding:6px 12px 8px;font-size:10.5px;color:var(--fg3);text-transform:uppercase;letter-spacing:.5px}
+.ctx-key{margin-left:auto;font-size:10.5px;color:var(--fg3);opacity:.6}
+.ctx-item:hover .ctx-key{color:#fff;opacity:.9}
+
+/* ═══════ 提示 ═══════ */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--panel);border:1px solid var(--line2);padding:9px 18px;border-radius:6px;font-size:12.5px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:tin .15s}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ═══════ 主题页 ═══════ */
+.theme-preview{width:100%;height:100px;border-radius:8px;border:1px solid var(--line);overflow:hidden;position:relative;margin-top:10px}
+.theme-preview .tp-side{position:absolute;left:0;top:0;bottom:0;width:28%;background:#101012}
+.theme-preview .tp-main{position:absolute;left:28%;right:0;top:0;bottom:0;background:#0a0a0b}
+.theme-preview .tp-bar{position:absolute;left:28%;right:0;top:0;height:20%;background:#101012;border-bottom:1px solid #232329}
+.theme-preview.light .tp-side{background:#fff}
+.theme-preview.light .tp-main{background:#f7f7f8}
+.theme-preview.light .tp-bar{background:#fff;border-bottom-color:#e5e5e7}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="side-top">
+      <span class="logo">WorldForge</span>
+      <button class="side-add" id="btnAddWorld" title="新建根世界">+</button>
+    </div>
+    <div class="side-label">世界树</div>
+    <div id="tree"></div>
+    <div class="side-bottom">
+      <button class="side-btn" data-nav="settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </button>
+      <button class="side-btn" data-nav="theme">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span>主题</span>
+      </button>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div id="ctxmenu"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══════════════ 基础工具 ═══════════════ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const toast = (msg, ms = 2400) => {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  $('#toast').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = '.25s'; setTimeout(() => el.remove(), 260); }, ms);
+};
+const fmt = ts => { const d = new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+const fmtTime = t => {
+  if (!t || t.year == null) return '—';
+  return `${t.year}年${String(t.month).padStart(2,'0')}月${String(t.day).padStart(2,'0')}日 ${String(t.hour??0).padStart(2,'0')}:${String(t.minute??0).padStart(2,'0')}`;
+};
+const deep = o => JSON.parse(JSON.stringify(o));
+
+/* ═══════════════ 数据层 ═══════════════ */
+const KEY = 'worldforge_v15';
+const DEF = () => ({
+  worlds: {},     // id -> world
+  rootIds: [],    // 根世界 id 列表
+  settings: {
+    theme: 'dark',
+    ai: { baseUrl: 'https://api.deepseek.com', apiKey: '', model: 'deepseek-v4-pro' }
+  }
+});
+let DB = DEF();
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch(e) { console.error('保存失败', e); } };
+const load = () => {
+  try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d?.worlds) DB = { ...DEF(), ...d }; } catch(e){}
+  if (!DB.settings) DB.settings = DEF().settings;
+  if (!DB.settings.ai) DB.settings.ai = DEF().settings.ai;
+  if (!DB.worlds) DB.worlds = {};
+  if (!DB.rootIds) DB.rootIds = [];
+  document.documentElement.setAttribute('data-theme', DB.settings.theme || 'dark');
+};
+
+const newWorld = (name, parentId = null) => ({
+  id: uid(),
+  name: name || '未命名世界',
+  desc: '',
+  parentId,          // 父世界 id（null 表示根）
+  childIds: [],      // 子世界 id 列表
+  createdAt: Date.now(),
+  seed: Math.floor(Math.random() * 1e9),
+  // 时间
+  clock: {
+    running: false, msPerTick: 250, minutesPerTick: 1, minutesPerHour: 60,
+    hoursPerDay: 24, daysPerMonth: 30, monthsPerYear: 12,
+    totalMinutes: 0, lastTick: 0
+  },
+  climate: { baseTemp: 20, seasonAmp: 10, weatherChangeHours: 6 },
+  _time: null, _weather: null,
+  _lastWeatherH: -1, _lastDisasterH: -1, _lastDiaryD: -1,
+  // 内容
+  canvas: { strokes: [], shapes: [], labels: [], textAreas: [] },  // 画板
+  entries: [],    // 设定条目
+  events: [],
+  aiChat: []
+});
+
+/* 添加世界（可指定父） */
+function addWorld(name, parentId = null) {
+  const w = newWorld(name, parentId);
+  DB.worlds[w.id] = w;
+  if (parentId && DB.worlds[parentId]) {
+    DB.worlds[parentId].childIds.push(w.id);
+  } else {
+    DB.rootIds.push(w.id);
+  }
+  save();
+  return w;
+}
+
+/* 递归删除 */
+function removeWorld(id) {
+  const w = DB.worlds[id];
+  if (!w) return;
+  // 递归删子
+  [...w.childIds].forEach(cid => removeWorld(cid));
+  // 从父的 childIds 移除
+  if (w.parentId && DB.worlds[w.parentId]) {
+    DB.worlds[w.parentId].childIds = DB.worlds[w.parentId].childIds.filter(x => x !== id);
+  } else {
+    DB.rootIds = DB.rootIds.filter(x => x !== id);
+  }
+  delete DB.worlds[id];
+  save();
+}
+
+/* 世界路径（用于显示面包屑） */
+function worldPath(id) {
+  const path = [];
+  let cur = DB.worlds[id];
+  while (cur) {
+    path.unshift(cur);
+    cur = cur.parentId ? DB.worlds[cur.parentId] : null;
+  }
+  return path;
+}
+
+/* 后代世界（用于递归搜索） */
+function descendants(id, out = []) {
+  const w = DB.worlds[id];
+  if (!w) return out;
+  w.childIds.forEach(cid => { out.push(cid); descendants(cid, out); });
+  return out;
+}
+
+const curW = () => cur.worldId ? DB.worlds[cur.worldId] : null;
+
+/* ═══════════════ 全局状态 ═══════════════ */
+const cur = {
+  worldId: null,
+  page: 'overview',  // overview | map | entries | oc | diary | events | ai | settings | theme
+  entryId: null,
+  ocId: null,
+  expanded: new Set(),   // 展开的树节点
+  canvas: {
+    tool: 'pen',
+    color: '#18181b',
+    width: 3,
+    view: { x: 0, y: 0, zoom: 1 },
+    drawing: false,
+    currentStroke: null,
+    pendingShape: [],
+    // 选中对象
+    selected: null
+  }
+};
+
+/* ═══════════════ 右键菜单（全局劫持） ═══════════════ */
+const ctxEl = document.getElementById('ctxmenu');
+let ctxOpen = false;
+
+function showCtx(x, y, items) {
+  let html = '';
+  for (const it of items) {
+    if (it.sep) { html += '<div class="ctx-sep"></div>'; continue; }
+    if (it.title) { html += `<div class="ctx-title">${esc(it.title)}</div>`; continue; }
+    const cls = 'ctx-item' + (it.disabled ? ' disabled' : '');
+    html += `<div class="${cls}" data-i="${items.indexOf(it)}">
+      ${it.icon ? `<span style="width:14px;text-align:center;opacity:.8">${it.icon}</span>` : ''}
+      <span>${esc(it.label)}</span>
+      ${it.key ? `<span class="ctx-key">${esc(it.key)}</span>` : ''}
+    </div>`;
+  }
+  ctxEl.innerHTML = html;
+  ctxEl.style.display = 'block';
+  ctxEl.style.left = '0px'; ctxEl.style.top = '0px';
+  const r = ctxEl.getBoundingClientRect();
+  ctxEl.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
+  ctxEl.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  ctxOpen = true;
+  ctxEl.querySelectorAll('.ctx-item').forEach(n => {
+    if (n.classList.contains('disabled')) return;
+    n.onclick = e => {
+      e.stopPropagation();
+      hideCtx();
+      const it = items[+n.dataset.i];
+      if (it && it.action) it.action();
+    };
+  });
+}
+function hideCtx() { ctxEl.style.display = 'none'; ctxOpen = false; }
+
+document.addEventListener('click', e => {
+  if (ctxOpen && !e.target.closest('#ctxmenu')) hideCtx();
+});
+document.addEventListener('scroll', hideCtx, true);
+window.addEventListener('blur', hideCtx);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtx(); });
+
+/* 全局劫持右键 - 关键点 */
+document.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // 找到带 data-ctx 的最近祖先
+  const target = e.target.closest('[data-ctx]');
+  let items = null;
+  if (target) {
+    const type = target.dataset.ctx;
+    const handler = CTX_HANDLERS[type];
+    if (handler) items = handler(target, e);
+  }
+  // 兜底：全局菜单
+  if (!items || !items.length) {
+    items = CTX_HANDLERS.__global ? CTX_HANDLERS.__global(e) : [];
+  }
+  if (items && items.length) showCtx(e.clientX, e.clientY, items);
+});
+
+const CTX_HANDLERS = {};
+
+/* ═══════════════ 时间系统 ═══════════════ */
+function tickWorld() {
+  const w = curW();
+  if (!w || !w.clock.running) return;
+  const c = w.clock;
+  c.totalMinutes += c.minutesPerTick;
+  const totalH = Math.floor(c.totalMinutes / c.minutesPerHour);
+  const hour = totalH % c.hoursPerDay;
+  const totalD = Math.floor(totalH / c.hoursPerDay);
+  const day = totalD % c.daysPerMonth + 1;
+  const month = Math.floor(totalD / c.daysPerMonth) % c.monthsPerYear + 1;
+  const year = Math.floor(totalD / (c.daysPerMonth * c.monthsPerYear)) + 1;
+  w._time = {
+    year, month, day, hour, minute: c.totalMinutes % c.minutesPerHour,
+    dayOfYear: (month - 1) * c.daysPerMonth + day,
+    totalDays: totalD, totalHours: totalH,
+    phase: hour < 6 ? '夜晚' : hour < 12 ? '上午' : hour < 18 ? '下午' : '傍晚'
+  };
+  if (totalH !== w._lastWeatherH && totalH % (w.climate.weatherChangeHours || 6) === 0) {
+    w._lastWeatherH = totalH;
+    updateWeather(w);
+  }
+  if (totalH !== w._lastDisasterH) {
+    w._lastDisasterH = totalH;
+    if (Math.random() < 0.012) triggerDisaster(w);
+  }
+  if (totalD !== w._lastDiaryD) {
+    w._lastDiaryD = totalD;
+    triggerDiaries(w);
+  }
+  save();
+}
+
+function updateWeather(w) {
+  const temp = w.climate.baseTemp + Math.sin(w.clock.totalMinutes / 60 / 24 / 365 * Math.PI * 2) * w.climate.seasonAmp;
+  const pools = temp < 0
+    ? ['晴', '多云', '阴', '雪', '雾']
+    : temp > 30 ? ['晴', '晴', '多云', '雷暴']
+    : ['晴', '多云', '阴', '小雨', '大雨', '雾'];
+  const type = pools[Math.floor(Math.random() * pools.length)];
+  w._weather = { type, temp: Math.round(temp + (Math.random() - 0.5) * 8) };
+  w.events.push({ id: uid(), type: 'weather', gameTime: fmtTime(w._time), text: `天气转为 ${type}`, time: Date.now() });
+  if (w.events.length > 500) w.events.splice(0, 100);
+}
+
+function triggerDisaster(w) {
+  const list = ['地震', '洪水', '大火', '瘟疫', '陨石', '蝗灾', '旱灾'];
+  const name = list[Math.floor(Math.random() * list.length)];
+  w.events.push({ id: uid(), type: 'disaster', gameTime: fmtTime(w._time), text: `发生灾难：${name}`, name, time: Date.now() });
+  if (w.events.length > 500) w.events.splice(0, 100);
+  toast(`灾难：${name}`, 3500);
+}
+
+function triggerDiaries(w) {
+  w.entries.filter(e => e.cat === 'oc').forEach(oc => genDiary(w, oc));
+}
+
+function genDiary(w, oc) {
+  const d = oc.oc || {};
+  const weather = w._weather?.type || '晴';
+  const timeStr = fmtTime(w._time);
+  const recent = w.events.slice(-6).map(e => e.text).filter(Boolean).join('；') || '一切平静';
+  const style = d.diaryStyle || '自然、真诚、第一人称';
+  if (!DB.settings.ai.apiKey) {
+    oc.diary = oc.diary || [];
+    oc.diary.push({ id: uid(), day: w._time.totalDays, time: timeStr, content: `今天${weather}。${recent}。` });
+    if (oc.diary.length > 300) oc.diary.shift();
+    save();
+    return;
+  }
+  const prompt = `以「${oc.title}」的第一人称写一篇今天的日记。\n风格：${style}\n时间：${timeStr}\n天气：${weather}\n最近发生：${recent}\n要求：自然简洁，100-180字，直接输出日记内容，不要标题。`;
+  aiChat([{ role: 'user', content: prompt }]).then(txt => {
+    oc.diary = oc.diary || [];
+    oc.diary.push({ id: uid(), day: w._time.totalDays, time: timeStr, content: txt.trim() });
+    if (oc.diary.length > 300) oc.diary.shift();
+    save();
+  }).catch(() => {});
+}
+
+/* ═══════════════ AI 引擎 ═══════════════ */
+function aiChat(messages, onDelta) {
+  return new Promise((resolve, reject) => {
+    const cfg = DB.settings.ai;
+    if (!cfg.apiKey) { reject(new Error('请先在设置中配置 API Key')); return; }
+    const url = cfg.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.apiKey },
+      body: JSON.stringify({ model: cfg.model, messages, stream: true })
+    }).then(res => {
+      if (!res.ok) return res.text().then(t => { throw new Error(`API ${res.status}: ${t.slice(0,200)}`) });
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '', full = '';
+      function read() {
+        reader.read().then(r => {
+          if (r.done) { resolve(full); return; }
+          buf += dec.decode(r.value, { stream: true });
+          const lines = buf.split('\n'); buf = lines.pop();
+          for (const line of lines) {
+            const l = line.trim();
+            if (!l.startsWith('data:')) continue;
+            const data = l.slice(5).trim();
+            if (data === '[DONE]') continue;
+            try {
+              const j = JSON.parse(data);
+              const delta = j.choices?.[0]?.delta?.content || '';
+              if (delta) { full += delta; onDelta?.(delta, full); }
+            } catch(e) {}
+          }
+          read();
+        }).catch(reject);
+      }
+      read();
+    }).catch(reject);
+  });
+}
+
+const parseActions = text => {
+  const out = [];
+  const re = /\[ACTION\]([\s\S]*?)\[\/ACTION\]/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    try { out.push(JSON.parse(m[1].trim())); } catch(e) {}
+  }
+  return out;
+};
+const stripActions = text => text.replace(/\[ACTION\][\s\S]*?\[\/ACTION\]/g, '').trim();
+
+/* AI 可执行的操作 */
+const AI_ACTIONS = {
+  // 世界树
+  create_world(w, d) {
+    const parent = d.parentId ? DB.worlds[d.parentId] : null;
+    const nw = addWorld(d.name || '新世界', parent ? parent.id : null);
+    if (d.desc) nw.desc = d.desc;
+    if (d.climate) Object.assign(nw.climate, d.climate);
+    return { ok: true, msg: `创建世界「${nw.name}」` };
+  },
+  update_world(w, d) {
+    const target = d.id ? DB.worlds[d.id] : w;
+    if (!target) return { ok: false, msg: '未找到世界' };
+    if (d.name) target.name = d.name;
+    if (d.desc != null) target.desc = d.desc;
+    if (d.climate) Object.assign(target.climate, d.climate);
+    if (d.clock) Object.assign(target.clock, d.clock);
+    return { ok: true, msg: `修改世界「${target.name}」` };
+  },
+  delete_world(w, d) {
+    const target = d.id ? DB.worlds[d.id] : null;
+    if (!target) return { ok: false, msg: '未找到世界' };
+    removeWorld(target.id);
+    return { ok: true, msg: `删除世界「${target.name}」` };
+  },
+
+  // 画板
+  add_stroke(w, d) {
+    if (!Array.isArray(d.points) || !d.points.length) return { ok: false, msg: '需要点数组' };
+    w.canvas.strokes.push({
+      id: uid(),
+      points: d.points.map(p => [Number(p[0]) || 0, Number(p[1]) || 0]),
+      color: d.color || '#18181b',
+      width: d.width || 3
+    });
+    return { ok: true, msg: '添加笔画' };
+  },
+  add_shape(w, d) {
+    if (!Array.isArray(d.points) || d.points.length < 3) return { ok: false, msg: '至少 3 个点' };
+    w.canvas.shapes.push({
+      id: uid(),
+      name: d.name || '区域',
+      points: d.points.map(p => [Number(p[0]) || 0, Number(p[1]) || 0]),
+      color: d.color || '#5b6ad0',
+      fill: d.fill || 'rgba(91,106,208,0.15)'
+    });
+    return { ok: true, msg: `添加区域「${d.name || '未命名'}」` };
+  },
+  add_label(w, d) {
+    w.canvas.labels.push({
+      id: uid(),
+      x: Number(d.x) || 0,
+      y: Number(d.y) || 0,
+      text: d.text || '',
+      color: d.color || '#18181b',
+      size: d.size || 14
+    });
+    return { ok: true, msg: '添加文字标注' };
+  },
+  add_textarea(w, d) {
+    w.canvas.textAreas.push({
+      id: uid(),
+      x: Number(d.x) || 0,
+      y: Number(d.y) || 0,
+      w: Number(d.w) || 200,
+      h: Number(d.h) || 100,
+      text: d.text || '',
+      color: d.color || '#18181b'
+    });
+    return { ok: true, msg: '添加文字块' };
+  },
+  clear_canvas(w, d) {
+    if (d.what === 'strokes') w.canvas.strokes = [];
+    else if (d.what === 'shapes') w.canvas.shapes = [];
+    else if (d.what === 'labels') w.canvas.labels = [];
+    else if (d.what === 'textAreas') w.canvas.textAreas = [];
+    else w.canvas = { strokes: [], shapes: [], labels: [], textAreas: [] };
+    return { ok: true, msg: '清空画板' };
+  },
+
+  // 条目
+  create_entry(w, d) {
+    const cats = ['base','geo','race','history','lore','currency','politics','corp','custom','oc'];
+    const cat = cats.includes(d.cat) ? d.cat : 'custom';
+    const entry = { id: uid(), cat, title: d.title || '未命名', content: d.content || '', createdAt: Date.now() };
+    if (cat === 'oc') {
+      entry.oc = {
+        fullName: d.oc?.fullName || '', alias: d.oc?.alias || '', gender: d.oc?.gender || '',
+        age: d.oc?.age || '', race: d.oc?.race || '', height: d.oc?.height || '',
+        weight: d.oc?.weight || '', appearance: d.oc?.appearance || '',
+        personality: d.oc?.personality || '', background: d.oc?.background || '',
+        ability: d.oc?.ability || '', weakness: d.oc?.weakness || '',
+        goal: d.oc?.goal || '', color: d.oc?.color || '#5b6ad0',
+        diaryStyle: d.oc?.diaryStyle || ''
+      };
+      entry.diary = [];
+    }
+    w.entries.push(entry);
+    return { ok: true, msg: `创建${cat === 'oc' ? '角色' : '条目'}「${entry.title}」` };
+  },
+  update_entry(w, d) {
+    const e = w.entries.find(x => x.id === d.id || x.title === d.title);
+    if (!e) return { ok: false, msg: '未找到条目' };
+    if (d.newTitle) e.title = d.newTitle;
+    if (d.content != null) e.content = d.content;
+    if (d.cat) e.cat = d.cat;
+    if (e.cat === 'oc' && d.oc) e.oc = { ...e.oc, ...d.oc };
+    return { ok: true, msg: `修改「${e.title}」` };
+  },
+  delete_entry(w, d) {
+    const e = w.entries.find(x => x.id === d.id || x.title === d.title);
+    if (!e) return { ok: false, msg: '未找到条目' };
+    w.entries = w.entries.filter(x => x.id !== e.id);
+    return { ok: true, msg: `删除「${e.title}」` };
+  },
+  add_event(w, d) {
+    w.events.push({ id: uid(), type: 'history', gameTime: d.gameTime || fmtTime(w._time), text: d.text || '', time: Date.now() });
+    return { ok: true, msg: '添加事件' };
+  },
+  add_diary(w, d) {
+    const oc = w.entries.find(x => x.cat === 'oc' && x.title === d.ocTitle);
+    if (!oc) return { ok: false, msg: `未找到角色「${d.ocTitle}」` };
+    oc.diary = oc.diary || [];
+    oc.diary.push({ id: uid(), day: d.day || (w._time?.totalDays || 0), time: d.time || fmtTime(w._time), content: d.content || '' });
+    return { ok: true, msg: `为「${oc.title}」添加日记` };
+  }
+};
+
+function applyActions(w, actions) {
+  const results = [];
+  for (const a of actions) {
+    const handler = AI_ACTIONS[a.type];
+    if (!handler) { results.push({ ok: false, msg: `未知操作: ${a.type}` }); continue; }
+    try { results.push(handler(w, a.data || a)); }
+    catch(e) { results.push({ ok: false, msg: `执行出错: ${e.message}` }); }
+  }
+  if (results.some(r => r.ok)) save();
+  return results;
+}
+
+/* ═══════════════ 树形渲染 ═══════════════ */
+function renderTree() {
+  const box = $('#tree');
+  if (!DB.rootIds.length) {
+    box.innerHTML = '<div style="padding:14px 10px;font-size:12px;color:var(--fg3)">还没有世界<br>点击右上角 + 新建</div>';
+    return;
+  }
+
+  const renderNode = (id, depth) => {
+    const w = DB.worlds[id];
+    if (!w) return '';
+    const hasChildren = w.childIds.length > 0;
+    const expanded = cur.expanded.has(id);
+    const active = cur.worldId === id ? ' active' : '';
+    const arrow = hasChildren ? (expanded ? '▾' : '▸') : '';
+    const indent = 8 + depth * 14;
+    let html = `<div class="tnode${active}" data-id="${id}" data-ctx="world" style="padding-left:${indent}px">
+      <span class="tnode-arrow${hasChildren ? '' : ' blank'}" data-toggle="${id}">${arrow}</span>
+      <span class="tnode-icon">${hasChildren ? '📁' : '📄'}</span>
+      <span class="tnode-name">${esc(w.name)}</span>
+      <button class="tnode-mini" data-addsub="${id}" title="新建子世界">+</button>
+    </div>`;
+    if (hasChildren && expanded) {
+      html += w.childIds.map(cid => renderNode(cid, depth + 1)).join('');
+    }
+    return html;
+  };
+
+  box.innerHTML = DB.rootIds.map(id => renderNode(id, 0)).join('');
+
+  // 点击世界
+  box.querySelectorAll('.tnode').forEach(el => {
+    el.onclick = e => {
+      if (e.target.dataset.toggle || e.target.dataset.addsub) return;
+      cur.worldId = el.dataset.id;
+      cur.page = 'overview';
+      cur.entryId = null;
+      render();
+    };
+  });
+
+  // 展开/收起
+  box.querySelectorAll('[data-toggle]').forEach(el => {
+    el.onclick = e => {
+      e.stopPropagation();
+      const id = el.dataset.toggle;
+      if (cur.expanded.has(id)) cur.expanded.delete(id);
+      else cur.expanded.add(id);
+      renderTree();
+    };
+  });
+
+  // 新建子世界
+  box.querySelectorAll('[data-addsub]').forEach(el => {
+    el.onclick = e => {
+      e.stopPropagation();
+      const parentId = el.dataset.addsub;
+      const name = prompt('子世界名称', '新子世界');
+      if (!name) return;
+      const nw = addWorld(name, parentId);
+      cur.expanded.add(parentId);
+      cur.worldId = nw.id;
+      cur.page = 'overview';
+      render();
+      toast('已创建子世界');
+    };
+  });
+}
+
+/* 世界节点的右键菜单 */
+CTX_HANDLERS.world = function (el) {
+  const id = el.dataset.id;
+  const w = DB.worlds[id];
+  if (!w) return [];
+  return [
+    { title: w.name },
+    { label: '打开', icon: '📂', action: () => { cur.worldId = id; cur.page = 'overview'; render(); } },
+    { label: '新建子世界', icon: '📁', action: () => {
+      const name = prompt('子世界名称', '新子世界');
+      if (!name) return;
+      const nw = addWorld(name, id);
+      cur.expanded.add(id);
+      cur.worldId = nw.id;
+      cur.page = 'overview';
+      render();
+    }},
+    { sep: true },
+    { label: '重命名', icon: '✎', action: () => {
+      const name = prompt('新名称', w.name);
+      if (!name) return;
+      w.name = name; save(); render();
+    }},
+    { label: '设置简介', icon: '📝', action: () => {
+      const desc = prompt('简介', w.desc || '');
+      if (desc === null) return;
+      w.desc = desc; save(); render();
+    }},
+    { label: '导出 JSON', icon: '📤', action: () => {
+      const blob = new Blob([JSON.stringify(w, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${w.name}.json`;
+      a.click();
+    }},
+    { sep: true },
+    { label: '删除', icon: '🗑', action: () => {
+      const cnt = 1 + descendants(id).length;
+      if (!confirm(`确定删除「${w.name}」？\n这将连同 ${cnt - 1} 个子世界一起删除。`)) return;
+      if (cur.worldId === id || descendants(id).includes(cur.worldId)) cur.worldId = DB.rootIds[0] || null;
+      removeWorld(id);
+      render();
+    }}
+  ];
+};
+
+/* 全局右键菜单（空白处） */
+CTX_HANDLERS.__global = function (e) {
+  const items = [];
+  items.push({ title: 'WorldForge' });
+  items.push({ label: '新建根世界', icon: '🌍', action: () => {
+    const w = addWorld('新世界');
+    cur.worldId = w.id;
+    cur.page = 'overview';
+    render();
+    toast('已创建世界');
+  }});
+  if (cur.worldId) {
+    items.push({ label: '在当前世界下新建子世界', icon: '📁', action: () => {
+      const name = prompt('子世界名称', '新子世界');
+      if (!name) return;
+      const nw = addWorld(name, cur.worldId);
+      cur.expanded.add(cur.worldId);
+      cur.worldId = nw.id;
+      cur.page = 'overview';
+      render();
+    }});
+  }
+  items.push({ sep: true });
+  items.push({ label: '设置', icon: '⚙', action: () => { cur.page = 'settings'; render(); } });
+  items.push({ label: '主题', icon: '◐', action: () => { cur.page = 'theme'; render(); } });
+  return items;
+};
+
+/* ═══════════════ 主区渲染 ═══════════════ */
+function render() {
+  renderTree();
+  const main = $('#main');
+  const w = curW();
+
+  // 全局页面（无世界也能用）
+  if (cur.page === 'settings') { renderSettingsPage(main); return; }
+  if (cur.page === 'theme') { renderThemePage(main); return; }
+
+  if (!w) {
+    main.innerHTML = `
+      <div class="topbar"><span class="topbar-title">WorldForge</span></div>
+      <div class="content">
+        <div class="empty">
+          <div class="empty-title">还没有世界</div>
+          <div class="empty-desc">点击左上角 + 新建一个，或在空白处右键打开菜单</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const path = worldPath(w.id);
+  const breadcrumb = path.map(p => esc(p.name)).join(' / ');
+
+  const pages = [
+    ['overview', '总览'],
+    ['map', '画板'],
+    ['entries', '设定'],
+    ['oc', '角色'],
+    ['diary', '日记'],
+    ['events', '事件'],
+    ['ai', 'AI 助手']
+  ];
+
+  main.innerHTML = `
+    <div class="topbar">
+      <input id="wName" value="${esc(w.name)}" style="background:transparent;border:1px solid transparent;font-size:14px;font-weight:600;width:auto;max-width:280px;padding:3px 6px;border-radius:5px" title="点击修改名称">
+      <span style="font-size:11.5px;color:var(--fg3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px">${breadcrumb}</span>
+      <div class="topbar-meta">
+        <span>${w.entries.filter(e => e.cat === 'oc').length} 角色</span>
+        <span>${w.entries.filter(e => e.cat !== 'oc').length} 条目</span>
+      </div>
+    </div>
+    <div class="nav">${pages.map(([k, label]) =>
+      `<button data-page="${k}" class="${cur.page === k ? 'on' : ''}">${label}</button>`).join('')}</div>
+    <div class="content${cur.page === 'map' ? ' no-scroll' : ''}" id="pageContent"></div>
+  `;
+
+  const wn = $('#wName');
+  wn.oninput = () => { w.name = wn.value; renderTree(); save(); };
+  wn.onfocus = () => { wn.style.background = 'var(--panel3)'; wn.style.borderColor = 'var(--line)'; };
+  wn.onblur = () => { wn.style.background = 'transparent'; wn.style.borderColor = 'transparent'; };
+
+  main.querySelectorAll('.nav button').forEach(b => {
+    b.onclick = () => { cur.page = b.dataset.page; render(); };
+  });
+
+  const content = $('#pageContent');
+  const renderers = {
+    overview: renderOverview,
+    map: renderCanvas,
+    entries: renderEntries,
+    oc: renderOC,
+    diary: renderDiary,
+    events: renderEvents,
+    ai: renderAI
+  };
+  renderers[cur.page]?.(content, w);
+}
+
+/* ═══════════════ 总览页 ═══════════════ */
+function renderOverview(content, w) {
+  content.innerHTML = `
+    <div class="page">
+      <div class="page-title">${esc(w.name)}</div>
+      <div class="page-desc">${esc(w.desc || '还没有简介，编辑下方来添加。')}</div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-v">${w.childIds.length}</div><div class="stat-l">子世界</div></div>
+        <div class="stat"><div class="stat-v">${w.entries.filter(e => e.cat === 'oc').length}</div><div class="stat-l">角色</div></div>
+        <div class="stat"><div class="stat-v">${w.entries.filter(e => e.cat !== 'oc').length}</div><div class="stat-l">设定条目</div></div>
+        <div class="stat"><div class="stat-v">${w.events.length}</div><div class="stat-l">事件</div></div>
+      </div>
+
+      <div class="section" style="margin-top:28px">
+        <div class="section-title">世界信息</div>
+        <div class="card">
+          <div class="form-row">
+            <label>名称</label>
+            <input id="ovName" value="${esc(w.name)}">
+          </div>
+          <div class="form-row">
+            <label>简介</label>
+            <textarea id="ovDesc" rows="3" placeholder="简要描述这个世界的核心设定，会作为 AI 的上下文">${esc(w.desc || '')}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">时间系统</div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <button class="btn ${w.clock.running ? '' : 'primary'}" id="clockToggle">${w.clock.running ? '⏸ 暂停' : '▶ 开始'}</button>
+            <span style="font-size:12px;color:var(--fg3)">当前：${fmtTime(w._time)} ${w._time?.phase || ''}</span>
+          </div>
+          <div class="grid3">
+            <div class="form-row"><label>每天小时数</label><input id="ovHours" type="number" min="1" max="100" value="${w.clock.hoursPerDay}"></div>
+            <div class="form-row"><label>每月天数</label><input id="ovDays" type="number" min="1" max="100" value="${w.clock.daysPerMonth}"></div>
+            <div class="form-row"><label>每年月数</label><input id="ovMonths" type="number" min="1" max="100" value="${w.clock.monthsPerYear}"></div>
+          </div>
+          <div class="grid3">
+            <div class="form-row"><label>每刻分钟</label><input id="ovMPT" type="number" min="1" value="${w.clock.minutesPerTick}"></div>
+            <div class="form-row"><label>每刻毫秒</label><input id="ovMsPT" type="number" min="50" step="50" value="${w.clock.msPerTick}"></div>
+            <div class="form-row"><label>天气变化(小时)</label><input id="ovWeather" type="number" min="1" value="${w.climate.weatherChangeHours}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">气候</div>
+        <div class="card">
+          <div class="grid2">
+            <div class="form-row"><label>基础温度 ℃</label><input id="ovTemp" type="number" value="${w.climate.baseTemp}"></div>
+            <div class="form-row"><label>季节温差</label><input id="ovSeason" type="number" value="${w.climate.seasonAmp}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">危险操作</div>
+        <div class="card">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="ovClearEvents">清空事件记录</button>
+            <button class="btn" id="ovClearCanvas">清空画板</button>
+            <button class="btn danger" id="ovDelete">删除此世界</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const bind = (id, setter) => {
+    const el = $(id); if (!el) return;
+    el.onchange = () => { setter(el.value); save(); };
+  };
+  bind('#ovName', v => { w.name = v; renderTree(); });
+  bind('#ovDesc', v => { w.desc = v; });
+  bind('#ovHours', v => { w.clock.hoursPerDay = clamp(+v || 24, 1, 100); });
+  bind('#ovDays', v => { w.clock.daysPerMonth = clamp(+v || 30, 1, 100); });
+  bind('#ovMonths', v => { w.clock.monthsPerYear = clamp(+v || 12, 1, 100); });
+  bind('#ovMPT', v => { w.clock.minutesPerTick = clamp(+v || 1, 1, 60); });
+  bind('#ovMsPT', v => { w.clock.msPerTick = clamp(+v || 250, 50, 5000); });
+  bind('#ovWeather', v => { w.climate.weatherChangeHours = clamp(+v || 6, 1, 24); });
+  bind('#ovTemp', v => { w.climate.baseTemp = +v || 20; });
+  bind('#ovSeason', v => { w.climate.seasonAmp = +v || 10; });
+
+  $('#clockToggle').onclick = () => {
+    w.clock.running = !w.clock.running;
+    w.clock.lastTick = Date.now();
+    save(); render();
+    toast(w.clock.running ? '时间开始运行' : '时间已暂停');
+  };
+  $('#ovClearEvents').onclick = () => {
+    if (!confirm('清空所有事件记录？')) return;
+    w.events = []; save(); render();
+  };
+  $('#ovClearCanvas').onclick = () => {
+    if (!confirm('清空画板？所有笔画、区域、标注都会被删除。')) return;
+    w.canvas = { strokes: [], shapes: [], labels: [], textAreas: [] };
+    save(); render();
+  };
+  $('#ovDelete').onclick = () => {
+    const cnt = 1 + descendants(w.id).length;
+    if (!confirm(`确定删除「${w.name}」？\n这将连同 ${cnt - 1} 个子世界一起删除。`)) return;
+    const wasRoot = !w.parentId;
+    removeWorld(w.id);
+    cur.worldId = DB.rootIds[0] || null;
+    render();
+  };
+}
+
+/* ═══════════════ 画板页 ═══════════════ */
+function renderCanvas(content, w) {
+  const c = cur.canvas;
+  if (!w.canvas) w.canvas = { strokes: [], shapes: [], labels: [], textAreas: [] };
+
+  content.innerHTML = `
+    <div class="canvas-page">
+      <div class="canvas-tools">
+        <div class="tool-group">
+          <button data-tool="pan" class="${c.tool === 'pan' ? 'on' : ''}">✋ 拖动</button>
+          <button data-tool="pen" class="${c.tool === 'pen' ? 'on' : ''}">✎ 画笔</button>
+          <button data-tool="eraser" class="${c.tool === 'eraser' ? 'on' : ''}">◻ 橡皮</button>
+          <button data-tool="shape" class="${c.tool === 'shape' ? 'on' : ''}">◇ 区域</button>
+          <button data-tool="label" class="${c.tool === 'label' ? 'on' : ''}">T 文字</button>
+          <button data-tool="text" class="${c.tool === 'text' ? 'on' : ''}">¶ 文字块</button>
+        </div>
+        <span class="tool-sep"></span>
+        <span class="tool-label">颜色</span>
+        <input type="color" class="color-pick" id="pickColor" value="${c.color}">
+        <span class="tool-label">粗细</span>
+        <input type="range" class="width-slider" id="pickWidth" min="1" max="20" value="${c.width}">
+        <span class="tool-sep"></span>
+        <button class="btn sm" id="canvasReset">复位视图</button>
+        <button class="btn sm" id="canvasClear">清空画板</button>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="board"></canvas>
+        <div class="canvas-info" id="canvasInfo">x=0 y=0 zoom=100%</div>
+        <div class="canvas-hint" id="canvasHint">滚轮缩放 · 拖动平移</div>
+      </div>
+    </div>
+  `;
+
+  // 工具切换
+  content.querySelectorAll('[data-tool]').forEach(b => {
+    b.onclick = () => {
+      c.tool = b.dataset.tool;
+      content.querySelectorAll('[data-tool]').forEach(x => x.classList.toggle('on', x === b));
+      c.pendingShape = [];
+      updateHint();
+      drawBoard();
+    };
+  });
+  $('#pickColor').oninput = e => { c.color = e.target.value; };
+  $('#pickWidth').oninput = e => { c.width = +e.target.value; };
+  $('#canvasReset').onclick = () => { c.view = { x: 0, y: 0, zoom: 1 }; drawBoard(); };
+  $('#canvasClear').onclick = () => {
+    if (!confirm('清空画板？')) return;
+    w.canvas = { strokes: [], shapes: [], labels: [], textAreas: [] };
+    save(); drawBoard();
+  };
+
+  function updateHint() {
+    const hints = {
+      pan: '滚轮缩放 · 拖动平移',
+      pen: '按住鼠标自由绘制',
+      eraser: '点击笔画擦除',
+      shape: '依次点击顶点 · 右键闭合',
+      label: '点击地图放置文字',
+      text: '点击地图放置文字块'
+    };
+    $('#canvasHint').textContent = hints[c.tool] || '';
+  }
+  updateHint();
+
+  bindBoardEvents(w);
+  setTimeout(() => { resizeBoard(); drawBoard(); }, 30);
+}
+
+function resizeBoard() {
+  const board = $('#board');
+  const wrap = $('#canvasWrap');
+  if (!board || !wrap) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  board.width = wrap.clientWidth * dpr;
+  board.height = wrap.clientHeight * dpr;
+  board.style.width = wrap.clientWidth + 'px';
+  board.style.height = wrap.clientHeight + 'px';
+}
+
+function worldToScreen(x, y) {
+  const board = $('#board');
+  if (!board) return { x: 0, y: 0 };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = board.width / dpr;
+  const H = board.height / dpr;
+  const v = cur.canvas.view;
+  return {
+    x: (x - v.x) * v.zoom + W / 2,
+    y: (y - v.y) * v.zoom + H / 2
+  };
+}
+function screenToWorld(sx, sy) {
+  const board = $('#board');
+  if (!board) return { x: 0, y: 0 };
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = board.width / dpr;
+  const H = board.height / dpr;
+  const v = cur.canvas.view;
+  return {
+    x: (sx - W / 2) / v.zoom + v.x,
+    y: (sy - H / 2) / v.zoom + v.y
+  };
+}
+
+function drawBoard() {
+  const board = $('#board');
+  if (!board) return;
+  const ctx = board.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = board.width / dpr;
+  const H = board.height / dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  // 背景网格（浅色）
+  const v = cur.canvas.view;
+  const gridSize = 50 * v.zoom;
+  if (gridSize > 4) {
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 1;
+    const ox = (W / 2) % gridSize;
+    const oy = (H / 2) % gridSize;
+    ctx.beginPath();
+    for (let x = ox; x < W; x += gridSize) {
+      ctx.moveTo(Math.round(x) + 0.5, 0);
+      ctx.lineTo(Math.round(x) + 0.5, H);
+    }
+    for (let y = oy; y < H; y += gridSize) {
+      ctx.moveTo(0, Math.round(y) + 0.5);
+      ctx.lineTo(W, Math.round(y) + 0.5);
+    }
+    ctx.stroke();
+  }
+
+  const w = curW();
+  if (!w) return;
+
+  // 区域（在底层）
+  w.canvas.shapes.forEach(shape => {
+    if (!shape.points?.length) return;
+    const pts = shape.points.map(p => worldToScreen(p[0], p[1]));
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle = shape.fill || 'rgba(91,106,208,0.15)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = shape.color;
+    ctx.stroke();
+
+    // 区域名
+    if (shape.name) {
+      let cx = 0, cy = 0;
+      pts.forEach(p => { cx += p.x; cy += p.y; });
+      cx /= pts.length; cy /= pts.length;
+      ctx.font = '600 13px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(shape.name).width;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(cx - tw / 2 - 6, cy - 9, tw + 12, 18);
+      ctx.fillStyle = shape.color;
+      ctx.fillText(shape.name, cx, cy);
+    }
+  });
+
+  // 笔画
+  w.canvas.strokes.forEach(stroke => {
+    if (!stroke.points?.length) return;
+    ctx.beginPath();
+    const pts = stroke.points.map(p => worldToScreen(p[0], p[1]));
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.lineWidth = stroke.width * v.zoom;
+    ctx.strokeStyle = stroke.color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  });
+
+  // 当前正在画的笔画
+  if (cur.canvas.currentStroke) {
+    const s = cur.canvas.currentStroke;
+    if (s.points.length) {
+      ctx.beginPath();
+      const pts = s.points.map(p => worldToScreen(p[0], p[1]));
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.lineWidth = s.width * v.zoom;
+      ctx.strokeStyle = s.color;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+  }
+
+  // 正在画的区域
+  if (cur.canvas.pendingShape.length) {
+    const pts = cur.canvas.pendingShape.map(p => worldToScreen(p[0], p[1]));
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = cur.canvas.color;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    pts.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, i === 0 ? 6 : 4, 0, Math.PI * 2);
+      ctx.fillStyle = i === 0 ? '#3fb950' : cur.canvas.color;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+    });
+
+    if (pts.length > 2) {
+      ctx.beginPath();
+      ctx.moveTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx.lineTo(pts[0].x, pts[0].y);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(91,106,208,0.5)';
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // 文字标注
+  w.canvas.labels.forEach(label => {
+    const p = worldToScreen(label.x, label.y);
+    const size = label.size * v.zoom;
+    if (size < 6) return;
+    ctx.font = `600 ${size}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = Math.max(3, size * 0.25);
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.strokeText(label.text, p.x, p.y);
+    ctx.fillStyle = label.color;
+    ctx.fillText(label.text, p.x, p.y);
+  });
+
+  // 文字块
+  w.canvas.textAreas.forEach(ta => {
+    const p = worldToScreen(ta.x, ta.y);
+    const tw = ta.w * v.zoom;
+    const th = ta.h * v.zoom;
+    if (tw < 20 || th < 15) return;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.fillRect(p.x, p.y, tw, th);
+    ctx.strokeRect(p.x, p.y, tw, th);
+
+    ctx.fillStyle = ta.color;
+    ctx.font = `${Math.max(10, 12 * v.zoom)}px -apple-system,sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    // 自动换行
+    const pad = 8;
+    const lineH = Math.max(14, 18 * v.zoom);
+    const maxW = tw - pad * 2;
+    const lines = wrapText(ctx, ta.text, maxW);
+    lines.forEach((line, i) => {
+      const y = p.y + pad + i * lineH;
+      if (y > p.y + th - pad) return;
+      ctx.fillText(line, p.x + pad, y);
+    });
+  });
+
+  // 更新信息
+  const info = $('#canvasInfo');
+  if (info) info.textContent = `x=${Math.round(v.x)} y=${Math.round(v.y)} zoom=${Math.round(v.zoom * 100)}%`;
+}
+
+function wrapText(ctx, text, maxW) {
+  const lines = [];
+  const paragraphs = String(text).split('\n');
+  for (const para of paragraphs) {
+    let line = '';
+    for (const ch of para) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+function bindBoardEvents(w) {
+  const board = $('#board');
+  const wrap = $('#canvasWrap');
+  if (!board || wrap._bound) return;
+  wrap._bound = true;
+
+  const c = cur.canvas;
+  let dragging = false, lastX = 0, lastY = 0;
+
+  // 找到鼠标相对 canvas 的坐标
+  const getLocal = e => {
+    const r = board.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+
+  board.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const p = getLocal(e);
+    const world = screenToWorld(p.x, p.y);
+
+    if (c.tool === 'pan') {
+      dragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+      board.classList.add('grabbing');
+      return;
+    }
+    if (c.tool === 'pen') {
+      c.drawing = true;
+      c.currentStroke = { points: [[world.x, world.y]], color: c.color, width: c.width };
+      drawBoard();
+      return;
+    }
+    if (c.tool === 'eraser') {
+      eraseAt(world.x, world.y);
+      return;
+    }
+    if (c.tool === 'shape') {
+      c.pendingShape.push([world.x, world.y]);
+      drawBoard();
+      return;
+    }
+    if (c.tool === 'label') {
+      const text = prompt('输入文字', '');
+      if (!text) return;
+      w.canvas.labels.push({ id: uid(), x: world.x, y: world.y, text, color: c.color, size: 14 });
+      save(); drawBoard();
+      return;
+    }
+    if (c.tool === 'text') {
+      const text = prompt('输入文字（可多行用 \\n 分隔）', '');
+      if (!text) return;
+      w.canvas.textAreas.push({
+        id: uid(), x: world.x, y: world.y, w: 200, h: 100,
+        text: text.replace(/\\n/g, '\n'), color: c.color
+      });
+      save(); drawBoard();
+      return;
+    }
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (dragging) {
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      c.view.x -= dx / c.view.zoom;
+      c.view.y -= dy / c.view.zoom;
+      drawBoard();
+      return;
+    }
+    if (c.drawing && c.currentStroke) {
+      const p = getLocal(e);
+      const world = screenToWorld(p.x, p.y);
+      const pts = c.currentStroke.points;
+      const last = pts[pts.length - 1];
+      const d = Math.hypot(world.x - last[0], world.y - last[1]);
+      if (d > 0.5 / c.view.zoom) {
+        pts.push([world.x, world.y]);
+        drawBoard();
+      }
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+    board.classList.remove('grabbing');
+    if (c.drawing && c.currentStroke) {
+      if (c.currentStroke.points.length > 1) {
+        w.canvas.strokes.push({
+          id: uid(),
+          points: c.currentStroke.points,
+          color: c.currentStroke.color,
+          width: c.currentStroke.width
+        });
+        save();
+      }
+      c.drawing = false;
+      c.currentStroke = null;
+      drawBoard();
+    }
+  });
+
+  board.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = board.getBoundingClientRect();
+    const mx = e.clientX - r.left - r.width / 2;
+    const my = e.clientY - r.top - r.height / 2;
+    const oldZoom = c.view.zoom;
+    const wx = mx / oldZoom + c.view.x;
+    const wy = my / oldZoom + c.view.y;
+    c.view.zoom = clamp(c.view.zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 0.1, 8);
+    c.view.x = wx - mx / c.view.zoom;
+    c.view.y = wy - my / c.view.zoom;
+    drawBoard();
+  }, { passive: false });
+
+  board.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (c.tool === 'shape' && c.pendingShape.length >= 3) {
+      const name = prompt('区域名称', '新区域');
+      if (!name) { c.pendingShape = []; drawBoard(); return; }
+      w.canvas.shapes.push({
+        id: uid(),
+        name,
+        points: c.pendingShape.slice(),
+        color: c.color,
+        fill: hexToRgba(c.color, 0.15)
+      });
+      c.pendingShape = [];
+      save(); drawBoard();
+      toast(`已创建区域「${name}」`);
+    }
+  });
+}
+
+function eraseAt(x, y) {
+  const w = curW();
+  if (!w) return;
+  const threshold = 15 / cur.canvas.view.zoom;
+  const before = w.canvas.strokes.length;
+  w.canvas.strokes = w.canvas.strokes.filter(s => {
+    return !s.points.some(p => Math.hypot(p[0] - x, p[1] - y) < threshold);
+  });
+  if (w.canvas.strokes.length !== before) {
+    save(); drawBoard();
+  }
+}
+
+function hexToRgba(hex, a) {
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!m) return `rgba(91,106,208,${a})`;
+  return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+}
+
+/* 画板空白右键 */
+CTX_HANDLERS.canvas = function (el, e) {
+  const items = [];
+  items.push({ title: '画板' });
+  items.push({ label: '复位视图', action: () => { cur.canvas.view = { x: 0, y: 0, zoom: 1 }; drawBoard(); } });
+  items.push({ label: '清空画板', action: () => {
+    const w = curW(); if (!w) return;
+    if (!confirm('清空画板？')) return;
+    w.canvas = { strokes: [], shapes: [], labels: [], textAreas: [] };
+    save(); drawBoard();
+  }});
+  items.push({ sep: true });
+  items.push({ label: '当前工具：' + ({ pan: '拖动', pen: '画笔', eraser: '橡皮', shape: '区域', label: '文字', text: '文字块' })[cur.canvas.tool], disabled: true });
+  return items;
+};
+
+/* ═══════════════ 设定页 ═══════════════ */
+const CATS = {
+  base: '基础设定', geo: '地理', race: '种族', history: '历史',
+  lore: '传说', currency: '货币', politics: '政治', corp: '组织', custom: '其他'
+};
+
+function renderEntries(content, w) {
+  const catOpts = Object.entries(CATS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+  content.innerHTML = `
+    <div class="two-col">
+      <div class="list-pane">
+        <div class="list-h">
+          <select id="newCat">${catOpts}</select>
+          <button class="btn primary sm" id="addEntry">新建</button>
+        </div>
+        <div class="list-body" id="entryList"></div>
+      </div>
+      <div class="edit-pane"><div class="edit-inner" id="editPane"></div></div>
+    </div>
+  `;
+
+  const drawList = () => {
+    const byCat = {};
+    w.entries.filter(e => e.cat !== 'oc').forEach(e => (byCat[e.cat] = byCat[e.cat] || []).push(e));
+    let html = '';
+    for (const [cat, name] of Object.entries(CATS)) {
+      const arr = byCat[cat] || [];
+      if (!arr.length) continue;
+      html += `<div class="li-group">${name} · ${arr.length}</div>`;
+      arr.forEach(e => {
+        const active = cur.entryId === e.id ? ' active' : '';
+        html += `<div class="li${active}" data-id="${e.id}">
+          <span class="li-name">${esc(e.title)}</span>
+          <button class="li-del" data-del="${e.id}">×</button>
+        </div>`;
+      });
+    }
+    $('#entryList').innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--fg3);font-size:12px">还没有条目</div>';
+    $$('#entryList .li').forEach(el => {
+      el.onclick = ev => {
+        if (ev.target.dataset.del) return;
+        cur.entryId = el.dataset.id;
+        drawList(); drawEditor();
+      };
+    });
+    $$('#entryList [data-del]').forEach(b => {
+      b.onclick = ev => {
+        ev.stopPropagation();
+        w.entries = w.entries.filter(x => x.id !== b.dataset.del);
+        if (cur.entryId === b.dataset.del) cur.entryId = null;
+        save(); drawList(); drawEditor();
+      };
+    });
+  };
+
+  const drawEditor = () => {
+    const pane = $('#editPane');
+    const e = w.entries.find(x => x.id === cur.entryId && x.cat !== 'oc');
+    if (!e) {
+      pane.innerHTML = '<div class="empty"><div class="empty-title">选择或新建条目</div><div class="empty-desc">左侧列表可管理条目，点击「新建」开始</div></div>';
+      return;
+    }
+    pane.innerHTML = `
+      <div class="form-row"><label>标题</label><input id="eTitle" value="${esc(e.title)}"></div>
+      <div class="form-row"><label>分类</label>
+        <select id="eCat">${Object.entries(CATS).map(([k, v]) =>
+          `<option value="${k}" ${e.cat === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </div>
+      <div class="form-row"><label>内容</label>
+        <textarea id="eContent" rows="20">${esc(e.content || '')}</textarea>
+      </div>
+    `;
+    $('#eTitle').oninput = () => { e.title = $('#eTitle').value; save(); drawList(); };
+    $('#eCat').onchange = () => { e.cat = $('#eCat').value; save(); drawList(); drawEditor(); };
+    $('#eContent').oninput = () => { e.content = $('#eContent').value; save(); };
+  };
+
+  $('#addEntry').onclick = () => {
+    const cat = $('#newCat').value;
+    const e = { id: uid(), cat, title: '新' + CATS[cat], content: '', createdAt: Date.now() };
+    w.entries.push(e);
+    cur.entryId = e.id;
+    save(); drawList(); drawEditor();
+  };
+
+  drawList(); drawEditor();
+}
+
+/* 条目右键 */
+CTX_HANDLERS.entry = function (el) {
+  const w = curW(); if (!w) return [];
+  const e = w.entries.find(x => x.id === el.dataset.id);
+  if (!e) return [];
+  return [
+    { title: e.title },
+    { label: '重命名', icon: '✎', action: () => {
+      const n = prompt('新标题', e.title);
+      if (!n) return;
+      e.title = n; save(); render();
+    }},
+    { sep: true },
+    { label: '删除', icon: '🗑', action: () => {
+      if (!confirm(`删除「${e.title}」？`)) return;
+      w.entries = w.entries.filter(x => x.id !== e.id);
+      save(); render();
+    }}
+  ];
+};
+
+/* ═══════════════ 角色页 ═══════════════ */
+function renderOC(content, w) {
+  const ocs = w.entries.filter(e => e.cat === 'oc');
+  content.innerHTML = `
+    <div style="padding:20px 32px 0;display:flex;align-items:center;gap:12px">
+      <button class="btn primary" id="addOC">+ 新建角色</button>
+      <span style="font-size:12.5px;color:var(--fg3)">${ocs.length} 位角色</span>
+      <input id="ocSearch" placeholder="搜索…" style="max-width:240px;margin-left:auto">
+    </div>
+    <div class="oc-grid" id="ocGrid"></div>
+  `;
+
+  const draw = (q = '') => {
+    const list = ocs.filter(o => !q || (o.title || '').toLowerCase().includes(q.toLowerCase()));
+    const grid = $('#ocGrid');
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-title">还没有角色</div><div class="empty-desc">点击「新建角色」开始，或让 AI 助手帮你生成</div></div>';
+      return;
+    }
+    grid.innerHTML = list.map(o => {
+      const d = o.oc || {};
+      const initial = (o.title || '?').slice(0, 1);
+      const avatar = d.avatar
+        ? `<div class="oc-avatar"><img src="${d.avatar}"></div>`
+        : `<div class="oc-avatar" style="background:${d.color || '#5b6ad0'}">${esc(initial)}</div>`;
+      const meta = [d.gender, d.age && d.age + '岁', d.race].filter(Boolean).join(' · ') || '未填写';
+      const diaryCount = (o.diary || []).length;
+      return `<div class="oc-card" data-id="${o.id}" data-ctx="oc">
+        <div class="oc-head">
+          ${avatar}
+          <div style="flex:1;min-width:0">
+            <div class="oc-name">${esc(o.title)}</div>
+            <div class="oc-meta">${esc(meta)}</div>
+          </div>
+        </div>
+        <div class="oc-desc">${esc(d.personality || d.background || o.content || '还没有描述')}</div>
+        ${diaryCount ? `<div style="font-size:11px;color:var(--fg3);margin-top:8px">${diaryCount} 篇日记</div>` : ''}
+      </div>`;
+    }).join('');
+    grid.querySelectorAll('.oc-card').forEach(c => {
+      c.onclick = () => openOCDetail(w, c.dataset.id);
+    });
+  };
+
+  $('#addOC').onclick = () => {
+    const e = {
+      id: uid(), cat: 'oc', title: '新角色', content: '',
+      oc: {
+        fullName: '', alias: '', gender: '', age: '', race: '', height: '', weight: '',
+        appearance: '', personality: '', background: '', ability: '', weakness: '',
+        goal: '', color: '#5b6ad0', avatar: null, diaryStyle: ''
+      },
+      diary: [], createdAt: Date.now()
+    };
+    w.entries.push(e);
+    save();
+    openOCDetail(w, e.id);
+  };
+  $('#ocSearch').oninput = e => draw(e.target.value);
+  draw();
+}
+
+function openOCDetail(w, id) {
+  const o = w.entries.find(e => e.id === id);
+  if (!o) return;
+  const d = o.oc || {};
+
+  cur.page = 'oc-detail';
+  const content = $('#pageContent');
+  content.innerHTML = `
+    <div class="page">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button class="btn" id="ocBack">← 返回列表</button>
+        <div style="flex:1"></div>
+        <button class="btn danger sm" id="ocDelete">删除角色</button>
+      </div>
+      <div class="grid2">
+        <div class="form-row"><label>姓名</label><input id="fName" value="${esc(o.title)}"></div>
+        <div class="form-row"><label>主题色</label><input type="color" id="fColor" value="${d.color || '#5b6ad0'}"></div>
+        <div class="form-row"><label>性别</label><input id="fGender" value="${esc(d.gender || '')}"></div>
+        <div class="form-row"><label>年龄</label><input id="fAge" value="${esc(d.age || '')}"></div>
+        <div class="form-row"><label>种族</label><input id="fRace" value="${esc(d.race || '')}"></div>
+        <div class="form-row"><label>别名</label><input id="fAlias" value="${esc(d.alias || '')}"></div>
+      </div>
+      <div class="form-row"><label>外貌</label><textarea id="fAppearance" rows="3">${esc(d.appearance || '')}</textarea></div>
+      <div class="form-row"><label>性格</label><textarea id="fPersonality" rows="3">${esc(d.personality || '')}</textarea></div>
+      <div class="form-row"><label>背景故事</label><textarea id="fBackground" rows="5">${esc(d.background || '')}</textarea></div>
+      <div class="grid2">
+        <div class="form-row"><label>能力</label><textarea id="fAbility" rows="3">${esc(d.ability || '')}</textarea></div>
+        <div class="form-row"><label>弱点</label><textarea id="fWeakness" rows="3">${esc(d.weakness || '')}</textarea></div>
+      </div>
+      <div class="form-row"><label>目标</label><textarea id="fGoal" rows="2">${esc(d.goal || '')}</textarea></div>
+      <div class="form-row"><label>日记风格</label><textarea id="fDiaryStyle" rows="2" placeholder="AI 写日记时参考">${esc(d.diaryStyle || '')}</textarea></div>
+
+      <div class="section" style="margin-top:32px">
+        <div class="section-title">日记 (${(o.diary || []).length})</div>
+        <div style="max-height:400px;overflow-y:auto">
+          ${(o.diary || []).slice().reverse().slice(0, 20).map(x =>
+            `<div class="card" style="margin-bottom:10px">
+              <div style="font-size:11px;color:var(--fg3);margin-bottom:6px">第 ${x.day} 天 · ${esc(x.time || '')}</div>
+              <div style="font-size:12.5px;line-height:1.75;white-space:pre-wrap">${esc(x.content)}</div>
+            </div>`
+          ).join('') || '<div style="color:var(--fg3);font-size:12.5px">还没有日记</div>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const bind = (id, setter) => {
+    const el = $(id); if (!el) return;
+    el.oninput = el.onchange = () => { setter(el.value); save(); };
+  };
+  bind('#fName', v => { o.title = v || '未命名'; renderTree(); });
+  bind('#fColor', v => { d.color = v; });
+  bind('#fGender', v => { d.gender = v; });
+  bind('#fAge', v => { d.age = v; });
+  bind('#fRace', v => { d.race = v; });
+  bind('#fAlias', v => { d.alias = v; });
+  bind('#fAppearance', v => { d.appearance = v; });
+  bind('#fPersonality', v => { d.personality = v; });
+  bind('#fBackground', v => { d.background = v; });
+  bind('#fAbility', v => { d.ability = v; });
+  bind('#fWeakness', v => { d.weakness = v; });
+  bind('#fGoal', v => { d.goal = v; });
+  bind('#fDiaryStyle', v => { d.diaryStyle = v; });
+
+  $('#ocBack').onclick = () => { cur.page = 'oc'; render(); };
+  $('#ocDelete').onclick = () => {
+    if (!confirm(`确定删除角色「${o.title}」？`)) return;
+    w.entries = w.entries.filter(x => x.id !== id);
+    save(); cur.page = 'oc'; render();
+  };
+}
+
+/* 角色卡片右键 */
+CTX_HANDLERS.oc = function (el) {
+  const w = curW(); if (!w) return [];
+  const o = w.entries.find(x => x.id === el.dataset.id);
+  if (!o) return [];
+  return [
+    { title: o.title },
+    { label: '打开', icon: '📂', action: () => openOCDetail(w, o.id) },
+    { label: '立即写一篇日记', icon: '✎', action: () => {
+      if (!w._time) w._time = { year: 1, month: 1, day: 1, hour: 8, minute: 0, totalDays: 0, totalHours: 8, phase: '上午' };
+      genDiary(w, o);
+      toast('已触发日记生成');
+      setTimeout(() => render(), 3500);
+    }},
+    { sep: true },
+    { label: '删除', icon: '🗑', action: () => {
+      if (!confirm(`删除「${o.title}」？`)) return;
+      w.entries = w.entries.filter(x => x.id !== o.id);
+      save(); render();
+    }}
+  ];
+};
+
+/* ═══════════════ 日记页 ═══════════════ */
+function renderDiary(content, w) {
+  const ocs = w.entries.filter(e => e.cat === 'oc');
+  const all = [];
+  ocs.forEach(o => (o.diary || []).forEach(d => all.push({ oc: o, d })));
+  all.sort((a, b) => (b.d.day || 0) - (a.d.day || 0));
+
+  content.innerHTML = `
+    <div class="timeline">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <span style="font-size:12.5px;color:var(--fg3)">共 ${all.length} 篇</span>
+        <div style="flex:1"></div>
+        <select id="diaryFilter" style="width:180px">
+          <option value="">全部角色</option>
+          ${ocs.map(o => `<option value="${o.id}">${esc(o.title)}</option>`).join('')}
+        </select>
+        <button class="btn sm" id="forceDiary">立即写日记</button>
+      </div>
+      <div id="diaryList"></div>
+    </div>
+  `;
+
+  const draw = (filter = '') => {
+    const list = all.filter(x => !filter || x.oc.id === filter);
+    const box = $('#diaryList');
+    if (!list.length) {
+      box.innerHTML = '<div class="empty"><div class="empty-title">还没有日记</div><div class="empty-desc">时间推进到新的一天时会自动生成，也可以点击右上角立即写</div></div>';
+      return;
+    }
+    box.innerHTML = list.map(x =>
+      `<div class="tl-item diary">
+        <div class="tl-time">第 ${x.d.day} 天 · ${esc(x.d.time || '')}</div>
+        <div class="tl-title"><span class="tl-tag">${esc(x.oc.title)}</span></div>
+        <div class="tl-body">${esc(x.d.content)}</div>
+      </div>`
+    ).join('');
+  };
+
+  $('#diaryFilter').onchange = e => draw(e.target.value);
+  $('#forceDiary').onclick = () => {
+    if (!w._time) w._time = { year: 1, month: 1, day: 1, hour: 8, minute: 0, totalDays: 0, totalHours: 8, phase: '上午' };
+    triggerDiaries(w);
+    setTimeout(() => render(), 4000);
+    toast('已触发日记生成');
+  };
+  draw();
+}
+
+/* ═══════════════ 事件页 ═══════════════ */
+function renderEvents(content, w) {
+  const events = w.events.slice().reverse().slice(0, 300);
+  content.innerHTML = `
+    <div class="timeline">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <span style="font-size:12.5px;color:var(--fg3)">共 ${w.events.length} 条</span>
+        <div style="flex:1"></div>
+        <button class="btn sm danger" id="clearEvents">清空</button>
+      </div>
+      <div id="eventList"></div>
+    </div>
+  `;
+
+  const box = $('#eventList');
+  if (!events.length) {
+    box.innerHTML = '<div class="empty"><div class="empty-title">还没有事件</div><div class="empty-desc">天气变化、灾难、历史事件会记录在这里</div></div>';
+  } else {
+    box.innerHTML = events.map(e => {
+      const cls = e.type === 'disaster' ? 'disaster' : e.type === 'weather' ? 'weather' : 'event';
+      const tag = { disaster: '灾难', weather: '天气', history: '历史', custom: '事件' }[e.type] || '事件';
+      return `<div class="tl-item ${cls}">
+        <div class="tl-time">${esc(e.gameTime || '')}</div>
+        <div class="tl-title"><span class="tl-tag">${tag}</span>${esc(e.name || '')}</div>
+        <div class="tl-body">${esc(e.text || '')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  $('#clearEvents').onclick = () => {
+    if (!confirm('清空所有事件记录？')) return;
+    w.events = []; save(); render();
+  };
+}
+
+/* ═══════════════ AI 页 ═══════════════ */
+function renderAI(content, w) {
+  const cfg = DB.settings.ai;
+  content.innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;max-width:900px;margin:0 auto;width:100%">
+      <div style="flex:1;overflow-y:auto;padding:24px" id="aiMsgs"></div>
+      <div class="chat-input">
+        <textarea id="aiInput" placeholder="输入消息…（Enter 发送，Shift+Enter 换行）"></textarea>
+        <button class="btn primary" id="aiSend">发送</button>
+      </div>
+    </div>
+  `;
+
+  const msgs = $('#aiMsgs');
+  const input = $('#aiInput');
+  const send = $('#aiSend');
+  const history = w.aiChat || (w.aiChat = []);
+
+  if (!history.length) {
+    msgs.innerHTML = `<div class="ai-msg sys">已加载当前世界上下文。可以用自然语言让 AI 做任何事：</div>
+      <div class="ai-msg sys">
+        · 帮我创建 3 个 NPC<br>
+        · 在这个世界下创建两个子世界：王国和教廷<br>
+        · 添加一条历史事件：第一纪元 300 年，帝国分裂<br>
+        · 给主角写今天的日记<br>
+        · 在画板上画一个位于 (0,0) 附近的区域
+      </div>`;
+  } else {
+    history.forEach(h => {
+      if (h.role === 'user' || h.role === 'assistant') {
+        const el = document.createElement('div');
+        el.className = 'ai-msg ' + h.role;
+        el.textContent = h.role === 'assistant' ? stripActions(h.content) : h.content;
+        msgs.appendChild(el);
+      }
+    });
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+
+  function addMsg(role, text) {
+    const el = document.createElement('div');
+    el.className = 'ai-msg ' + role;
+    el.textContent = text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  async function doSend() {
+    const text = input.value.trim();
+    if (!text) return;
+    if (!cfg.apiKey) { toast('请先在设置中配置 AI'); return; }
+
+    input.value = '';
+    addMsg('user', text);
+    history.push({ role: 'user', content: text });
+
+    const el = addMsg('assistant', '…');
+    send.disabled = true;
+
+    const path = worldPath(w.id).map(p => p.name).join(' / ');
+    const ctx = `
+当前世界：${w.name}
+路径：${path}
+简介：${w.desc || '(无)'}
+时间：${fmtTime(w._time)}，天气：${w._weather?.type || '未知'}
+子世界：${w.childIds.length} 个（${w.childIds.map(cid => DB.worlds[cid]?.name).join('、') || '无'}）
+角色：${w.entries.filter(e => e.cat === 'oc').map(o => o.title).join('、') || '无'}
+设定条目：${w.entries.filter(e => e.cat !== 'oc').length} 条
+画板：${w.canvas.strokes.length} 笔画 / ${w.canvas.shapes.length} 区域 / ${w.canvas.labels.length} 文字
+`.trim();
+
+    const sys = `你是 WorldForge 的世界管理助手。通过 [ACTION]{...}[/ACTION] 标记直接修改数据。
+
+【当前世界】
+${ctx}
+
+【可用操作】
+
+■ 世界树
+[ACTION]{"type":"create_world","data":{"name":"世界名","desc":"简介","parentId":"可选，父世界id"}}[/ACTION]
+[ACTION]{"type":"update_world","data":{"id":"可选","name":"新名","desc":"新简介","climate":{"baseTemp":15}}}[/ACTION]
+[ACTION]{"type":"delete_world","data":{"id":"世界id"}}[/ACTION]
+注意：不传 id 时默认操作当前世界。
+
+■ 画板
+[ACTION]{"type":"add_shape","data":{"name":"区域名","points":[[0,0],[100,0],[100,100],[0,100]],"color":"#5b6ad0"}}[/ACTION]
+[ACTION]{"type":"add_stroke","data":{"points":[[0,0],[50,20],[100,50]],"color":"#18181b","width":3}}[/ACTION]
+[ACTION]{"type":"add_label","data":{"x":0,"y":0,"text":"标注","color":"#18181b"}}[/ACTION]
+[ACTION]{"type":"add_textarea","data":{"x":0,"y":0,"w":200,"h":100,"text":"文字内容"}}[/ACTION]
+[ACTION]{"type":"clear_canvas","data":{"what":"strokes|shapes|labels|textAreas"}}[/ACTION]
+
+■ 条目/角色
+[ACTION]{"type":"create_entry","data":{"cat":"base|race|history|oc|...","title":"标题","content":"内容"}}[/ACTION]
+创建角色时 cat 用 "oc"，并附带 oc 字段：
+[ACTION]{"type":"create_entry","data":{"cat":"oc","title":"角色名","content":"简介","oc":{"gender":"女","age":"20","race":"人类","personality":"性格","appearance":"外貌","background":"背景","ability":"能力","weakness":"弱点","goal":"目标","diaryStyle":"日记风格"}}}[/ACTION]
+
+[ACTION]{"type":"update_entry","data":{"title":"原标题","newTitle":"新标题","content":"新内容"}}[/ACTION]
+[ACTION]{"type":"delete_entry","data":{"title":"标题"}}[/ACTION]
+
+■ 事件与日记
+[ACTION]{"type":"add_event","data":{"text":"事件描述","gameTime":"第1年 1月1日"}}[/ACTION]
+[ACTION]{"type":"add_diary","data":{"ocTitle":"角色名","content":"日记内容"}}[/ACTION]
+
+【规则】
+- 用户要求修改数据时必须输出 ACTION，不要只描述
+- 可同时输出多个 ACTION
+- ACTION 内的 JSON 必须合法
+- 若只是咨询，不需 ACTION
+
+【重要】若用户要求"在当前世界下创建子世界"，使用 create_world 并且不传 parentId（默认就挂在当前世界下）。`;
+
+    try {
+      let fullText = '';
+      await aiChat(
+        [{ role: 'system', content: sys }, ...history.slice(-16)],
+        (delta, full) => {
+          fullText = full;
+          el.textContent = stripActions(full) || '…';
+          msgs.scrollTop = msgs.scrollHeight;
+        }
+      );
+
+      const actions = parseActions(fullText);
+      const results = actions.length ? applyActions(w, actions) : [];
+      history.push({ role: 'assistant', content: fullText });
+      el.textContent = stripActions(fullText) || (results.length ? '(已执行)' : '');
+      results.forEach(r => {
+        const line = document.createElement('div');
+        line.className = 'ai-act ' + (r.ok ? 'ok' : 'err');
+        line.textContent = (r.ok ? '✓ ' : '✗ ') + r.msg;
+        el.appendChild(line);
+      });
+      save();
+
+      if (results.some(r => r.ok)) {
+        renderTree();
+      }
+    } catch(err) {
+      el.textContent = '错误：' + err.message;
+      el.style.color = 'var(--warn)';
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  send.onclick = doSend;
+  input.onkeydown = e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
+  };
+  setTimeout(() => input.focus(), 100);
+}
+
+/* ═══════════════ 设置页 ═══════════════ */
+function renderSettingsPage(main) {
+  const cfg = DB.settings.ai;
+  main.innerHTML = `
+    <div class="topbar"><span class="topbar-title">设置</span></div>
+    <div class="content">
+      <div class="page">
+        <div class="page-title">设置</div>
+        <div class="page-desc">全局设置，所有世界共享</div>
+
+        <div class="section">
+          <div class="section-title">AI 接口</div>
+          <div class="card">
+            <div class="form-row">
+              <label>API Base URL</label>
+              <input id="cfgUrl" value="${esc(cfg.baseUrl)}" placeholder="https://api.deepseek.com">
+              <div class="form-help">DeepSeek: https://api.deepseek.com · OpenAI: https://api.openai.com/v1</div>
+            </div>
+            <div class="form-row">
+              <label>API Key</label>
+              <input id="cfgKey" type="password" value="${esc(cfg.apiKey)}" placeholder="sk-...">
+              <div class="form-help">保存在浏览器本地，不会上传</div>
+            </div>
+            <div class="form-row">
+              <label>模型名称</label>
+              <input id="cfgModel" value="${esc(cfg.model)}" placeholder="deepseek-v4-pro">
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                ${['deepseek-v4-pro','deepseek-flash','gpt-4o','gpt-4o-mini','qwen-plus'].map(m =>
+                  `<button class="btn sm" data-model="${m}">${m}</button>`).join('')}
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:16px">
+              <button class="btn primary" id="cfgSave">保存</button>
+              <button class="btn" id="cfgTest">测试连接</button>
+              <span id="cfgTestResult" style="font-size:12.5px;color:var(--fg2)"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">数据</div>
+          <div class="card">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="dataExport">导出全部数据</button>
+              <button class="btn" id="dataImport">导入数据</button>
+              <button class="btn danger" id="dataClear">清空全部数据</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">关于</div>
+          <div class="card" style="font-size:12.5px;color:var(--fg2);line-height:1.8">
+            WorldForge · 世界管理工具<br>
+            数据存储在浏览器本地，建议定期导出备份。
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  main.querySelectorAll('[data-model]').forEach(b => {
+    b.onclick = () => { $('#cfgModel').value = b.dataset.model; };
+  });
+  $('#cfgSave').onclick = () => {
+    cfg.baseUrl = $('#cfgUrl').value.trim() || 'https://api.deepseek.com';
+    cfg.apiKey = $('#cfgKey').value.trim();
+    cfg.model = $('#cfgModel').value.trim() || 'deepseek-v4-pro';
+    save();
+    toast('已保存');
+  };
+  $('#cfgTest').onclick = async () => {
+    const out = $('#cfgTestResult');
+    out.textContent = '测试中…';
+    out.style.color = 'var(--fg2)';
+    const url = $('#cfgUrl').value.trim().replace(/\/+$/, '');
+    const key = $('#cfgKey').value.trim();
+    const model = $('#cfgModel').value.trim();
+    if (!key) { out.textContent = '请填 API Key'; out.style.color = 'var(--warn)'; return; }
+    try {
+      const r = await fetch(url + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: '回复"OK"' }] })
+      });
+      if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 100));
+      const j = await r.json();
+      out.textContent = '连接成功：' + (j.choices?.[0]?.message?.content || 'OK');
+      out.style.color = 'var(--ok)';
+    } catch(e) {
+      out.textContent = '失败：' + e.message;
+      out.style.color = 'var(--warn)';
+    }
+  };
+  $('#dataExport').onclick = () => {
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `worldforge-${Date.now()}.json`;
+    a.click();
+  };
+  $('#dataImport').onclick = () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json';
+    inp.onchange = () => {
+      const f = inp.files[0]; if (!f) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const d = JSON.parse(fr.result);
+          if (!d.worlds) throw new Error('格式错误');
+          if (!confirm('导入将覆盖当前所有数据，确定吗？')) return;
+          DB = { ...DEF(), ...d };
+          save();
+          cur.worldId = DB.rootIds[0] || null;
+          cur.page = 'overview';
+          render();
+          toast('导入成功');
+        } catch(e) { toast('导入失败：' + e.message); }
+      };
+      fr.readAsText(f);
+    };
+    inp.click();
+  };
+  $('#dataClear').onclick = () => {
+    if (!confirm('清空所有数据？不可恢复！')) return;
+    localStorage.removeItem(KEY);
+    location.reload();
+  };
+}
+
+/* ═══════════════ 主题页 ═══════════════ */
+function renderThemePage(main) {
+  const current = DB.settings.theme || 'dark';
+  main.innerHTML = `
+    <div class="topbar"><span class="topbar-title">主题</span></div>
+    <div class="content">
+      <div class="page">
+        <div class="page-title">主题</div>
+        <div class="page-desc">选择界面外观。切换后立即生效。</div>
+
+        <div class="section">
+          <div class="section-title">当前主题：${current === 'dark' ? '深色' : '浅色'}</div>
+          <div class="grid2">
+            <div class="card" style="cursor:pointer;${current === 'dark' ? 'border-color:var(--acc);border-width:2px' : ''}" data-theme="dark">
+              <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                深色
+                ${current === 'dark' ? '<span style="margin-left:auto;color:var(--acc);font-size:12px">✓ 当前</span>' : ''}
+              </div>
+              <div class="card-sub">低亮度界面，适合夜晚使用</div>
+              <div class="theme-preview">
+                <div class="tp-side"></div>
+                <div class="tp-bar"></div>
+                <div class="tp-main"></div>
+              </div>
+            </div>
+            <div class="card" style="cursor:pointer;${current === 'light' ? 'border-color:var(--acc);border-width:2px' : ''}" data-theme="light">
+              <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                浅色
+                ${current === 'light' ? '<span style="margin-left:auto;color:var(--acc);font-size:12px">✓ 当前</span>' : ''}
+              </div>
+              <div class="card-sub">明亮界面，适合白天使用</div>
+              <div class="theme-preview light">
+                <div class="tp-side"></div>
+                <div class="tp-bar"></div>
+                <div class="tp-main"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  main.querySelectorAll('[data-theme]').forEach(el => {
+    el.onclick = () => {
+      const t = el.dataset.theme;
+      DB.settings.theme = t;
+      document.documentElement.setAttribute('data-theme', t);
+      save();
+      toast(`已切换到${t === 'dark' ? '深色' : '浅色'}主题`);
+      renderThemePage(main);
+    };
+  });
+}
+
+/* ═══════════════ 事件绑定 ═══════════════ */
+document.getElementById('btnAddWorld').onclick = () => {
+  const w = addWorld('新世界');
+  cur.worldId = w.id;
+  cur.page = 'overview';
+  render();
+  toast('已创建世界，可在总览页修改名称和简介');
+};
+
+// 侧栏底部导航
+document.querySelectorAll('.side-btn[data-nav]').forEach(b => {
+  b.onclick = () => {
+    cur.page = b.dataset.nav;
+    render();
+  };
+});
+
+/* 时钟循环 */
+setInterval(() => {
+  const w = curW();
+  if (!w || !w.clock.running) return;
+  const now = Date.now();
+  if (!w.clock.lastTick) w.clock.lastTick = now;
+  if (now - w.clock.lastTick >= w.clock.msPerTick) {
+    w.clock.lastTick = now;
+    tickWorld();
+    // 更新顶栏时间
+    if (cur.page === 'overview') {
+      const el = document.querySelector('#clockToggle');
+      // 只是更新显示，不重新渲染
+    }
+  }
+}, 60);
+
+/* ═══════════════ 启动 ═══════════════ */
+try {
+  load();
+  if (!DB.rootIds.length) {
+    // 首次：创建示例世界树
+    const w = addWorld('示例世界');
+    w.desc = '这是一个示例世界。你可以创建子世界、添加设定条目和角色、在画板里绘制地图，或让 AI 助手一键生成内容。';
+
+    // 加两个子世界演示嵌套
+    const sub1 = addWorld('北境王国', w.id);
+    sub1.desc = '位于世界北方的寒冷王国。';
+    const sub2 = addWorld('南方联盟', w.id);
+    sub2.desc = '南方的城邦联盟。';
+
+    // 加示例角色
+    w.entries.push({
+      id: uid(), cat: 'oc', title: '凛', content: '能听见风声的女剑客',
+      oc: {
+        gender: '女', age: '19', race: '人类',
+        personality: '沉默寡言，但对未知充满好奇',
+        appearance: '银白色短发，左眼有旧伤',
+        background: '来自北境的小村庄',
+        ability: '能听到风中的低语',
+        weakness: '过度使用会短暂失聪',
+        goal: '寻找失踪的兄长',
+        color: '#5b6ad0', diaryStyle: '冷静、简短'
+      },
+      diary: [], createdAt: Date.now()
+    });
+    w.entries.push({
+      id: uid(), cat: 'base', title: '世界基石', content: '这片大陆由三个王国共同统治。'
+    });
+
+    cur.worldId = w.id;
+    cur.expanded.add(w.id);
+    save();
+  } else {
+    cur.worldId = DB.rootIds[0];
+    // 自动展开根节点
+    DB.rootIds.forEach(id => cur.expanded.add(id));
+  }
+  render();
+} catch(e) {
+  console.error(e);
+  document.body.innerHTML = '<div style="padding:40px;font:14px sans-serif;color:#fff;background:#0a0a0b;height:100vh">初始化失败：' + esc(e.message) + '</div>';
+}
+</script>
+</body>
+</html>
