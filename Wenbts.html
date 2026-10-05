@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wnebts · 聚合搜索</title>
+<meta name="description" content="Wnebts 聚合搜索 — 多源聚合，一键跳转主流引擎，可设为默认搜索引擎。">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  color-scheme: dark light;
+  --bg:#09090b;--surface:#131316;--surface-2:#1c1c20;
+  --border:#26262b;--border-2:#313138;
+  --text:#ededf0;--muted:#8b8b95;
+  --accent:#a78bfa;--accent-dim:rgba(167,139,250,.12);
+  --shadow:rgba(0,0,0,.5);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#fafafa;--surface:#ffffff;--surface-2:#f4f4f5;
+    --border:#e4e4e7;--border-2:#d4d4d8;
+    --text:#18181b;--muted:#71717a;
+    --accent:#7c3aed;--accent-dim:rgba(124,58,237,.08);
+    --shadow:rgba(0,0,0,.08);
+  }
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  transition:background .2s,color .2s;font-size:14px;line-height:1.5;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
+::selection{background:var(--accent);color:var(--bg)}
+mark{background:var(--accent-dim);color:var(--accent);border-radius:3px;padding:0 2px;font-weight:500}
+a{color:inherit}
+
+header{
+  position:sticky;top:0;z-index:100;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:saturate(180%) blur(16px);
+  -webkit-backdrop-filter:saturate(180%) blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav{max-width:1200px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0;text-decoration:none;color:inherit}
+.brand .mark{
+  width:28px;height:28px;border-radius:8px;background:var(--accent);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;
+}
+.brand .name{font-weight:700;font-size:15px;letter-spacing:-.2px}
+.nav-spacer{flex:1}
+.icon-btn{
+  height:34px;min-width:34px;padding:0 12px;border-radius:9px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);font-family:inherit;font-size:13px;font-weight:500;
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.icon-btn:hover{background:var(--surface);color:var(--text);border-color:var(--border-2)}
+.icon-btn.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+
+#searchHome{padding:56px 0 80px}
+.home-wrap{max-width:780px;margin:0 auto;padding:0 24px;text-align:center}
+.home-title{
+  font-size:clamp(30px,5.4vw,48px);font-weight:800;
+  letter-spacing:-1.4px;line-height:1.1;margin-bottom:12px;
+}
+.home-title .accent{
+  background:linear-gradient(120deg,var(--accent),#f472b6 55%,#22d3ee);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.home-sub{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:32px}
+
+.search-box{
+  display:flex;align-items:center;height:54px;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;padding:0 6px 0 18px;
+  transition:border-color .18s,box-shadow .18s;box-shadow:0 1px 2px var(--shadow);
+}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.search-box .s-icon{width:18px;height:18px;color:var(--muted);flex-shrink:0;margin-right:12px}
+.search-box input{
+  flex:1;min-width:0;height:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:15px;font-family:inherit;
+}
+.search-box input::placeholder{color:var(--muted)}
+.search-box .go-btn{
+  height:42px;padding:0 20px;border-radius:10px;border:none;
+  background:var(--accent);color:#fff;font-size:13.5px;font-weight:600;
+  font-family:inherit;cursor:pointer;transition:filter .15s;flex-shrink:0;
+}
+.search-box .go-btn:hover{filter:brightness(1.1)}
+
+.install-tip{
+  margin-top:14px;font-size:12.5px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-wrap:wrap;
+}
+.install-tip b{color:var(--accent);font-weight:600}
+
+.treasure-section{max-width:1100px;margin:64px auto 0;padding:0 24px;text-align:left}
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:18px;flex-wrap:wrap;
+}
+.section-header h2{
+  font-size:16px;font-weight:700;letter-spacing:-.2px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-header h2 .live-dot{
+  width:6px;height:6px;border-radius:50%;background:#10b981;
+  box-shadow:0 0 0 3px rgba(16,185,129,.2);animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.section-header p{color:var(--muted);font-size:12.5px;margin-top:2px}
+.section-header .refresh{
+  height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:inherit;font-size:12.5px;
+  font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s;
+}
+.section-header .refresh:hover{background:var(--surface);color:var(--text);border-color:var(--border-2)}
+.section-header .refresh svg{width:13px;height:13px;transition:transform .3s}
+.section-header .refresh.spinning svg{transform:rotate(360deg)}
+
+.treasure-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.treasure{
+  display:flex;flex-direction:column;gap:8px;
+  padding:14px 16px;border-radius:12px;background:var(--surface);
+  border:1px solid var(--border);text-decoration:none;color:inherit;
+  transition:border-color .18s,transform .18s,box-shadow .18s;
+  animation:cardIn .35s ease backwards;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.treasure:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px -12px var(--shadow)}
+.treasure .t-top{display:flex;align-items:center;gap:8px}
+.treasure .t-icon{
+  width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  display:grid;place-items:center;font-size:14px;
+  background:var(--surface-2);border:1px solid var(--border);
+}
+.treasure .t-source{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
+.treasure .t-title{
+  font-size:14px;font-weight:600;line-height:1.35;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;
+}
+.treasure:hover .t-title{color:var(--accent)}
+.treasure .t-desc{
+  font-size:12.5px;color:var(--muted);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;
+}
+.treasure .t-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:4px}
+.treasure .t-meta .star{color:#f59e0b}
+.treasure .t-meta .lang{color:var(--accent)}
+
+.treasure-loading{grid-column:1/-1;padding:40px;text-align:center;color:var(--muted);font-size:13px}
+.treasure-loading .spinner{
+  width:24px;height:24px;margin:0 auto 12px;
+  border:2.5px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#resultsView{display:none;max-width:1120px;margin:0 auto;padding:0 24px 80px}
+#resultsView.show{display:block}
+body[data-view="results"] #searchHome{display:none}
+
+.result-bar{
+  position:sticky;top:56px;z-index:50;background:var(--bg);
+  padding:14px 0 10px;border-bottom:1px solid var(--border);
+}
+.result-bar .bar{
+  display:flex;align-items:center;height:44px;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:0 6px 0 16px;
+  max-width:680px;transition:border-color .18s,box-shadow .18s;
+}
+.result-bar .bar:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.result-bar .bar svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;margin-right:10px}
+.result-bar .bar input{
+  flex:1;min-width:0;height:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:14px;font-family:inherit;
+}
+.result-bar .bar input::placeholder{color:var(--muted)}
+.result-bar .bar .go{
+  height:34px;padding:0 14px;border-radius:8px;border:none;
+  background:var(--accent);color:#fff;font-size:12.5px;font-weight:600;
+  font-family:inherit;cursor:pointer;flex-shrink:0;
+}
+
+.result-stats{
+  padding:14px 4px 8px;font-size:12.5px;color:var(--muted);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;
+}
+.result-stats b{color:var(--text);font-weight:600}
+.result-stats .chips{display:flex;gap:6px;flex-wrap:wrap}
+.result-stats .chip{
+  padding:3px 9px;border-radius:6px;font-size:11px;font-weight:500;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);
+}
+
+.result-list{max-width:720px}
+
+/* 外部搜索引擎跳转卡片 */
+.external-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  margin-bottom:8px;
+}
+.ext-card{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:10px;
+  background:var(--surface);border:1px solid var(--border);
+  text-decoration:none;color:inherit;
+  transition:border-color .15s,transform .15s;
+}
+.ext-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.ext-card .e-icon{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:var(--surface-2);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:16px;
+}
+.ext-card .e-body{min-width:0;flex:1}
+.ext-card .e-name{font-size:13.5px;font-weight:600;color:var(--text);line-height:1.2}
+.ext-card .e-hint{font-size:11.5px;color:var(--muted);margin-top:1px}
+.ext-card .e-arrow{color:var(--muted);font-size:14px;flex-shrink:0}
+
+.src-section{display:none;animation:fadein .3s ease}
+.src-section.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.group-label{
+  padding:22px 0 8px;font-size:12px;font-weight:600;color:var(--muted);
+  letter-spacing:.6px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.group-label .ic{font-size:13px}
+.group-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.g-result{
+  display:block;padding:12px 12px;margin:0 -12px;
+  border-radius:10px;text-decoration:none;color:inherit;transition:background .15s;
+}
+.g-result:hover{background:var(--surface)}
+.g-url{
+  display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+  margin-bottom:3px;line-height:1.3;flex-wrap:wrap;
+}
+.g-fav{
+  width:16px;height:16px;border-radius:50%;flex-shrink:0;
+  background:var(--surface-2);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:9px;color:var(--muted);overflow:hidden;
+}
+.g-fav img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.g-site{color:var(--muted)}
+.g-tag{
+  font-size:10px;padding:1px 6px;border-radius:4px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--border);
+}
+.g-title{
+  font-size:17px;font-weight:600;line-height:1.35;color:var(--text);margin-bottom:4px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  word-break:break-word;
+}
+.g-result:hover .g-title{color:var(--accent)}
+.g-snippet{
+  font-size:13.5px;color:var(--muted);line-height:1.58;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  word-break:break-word;
+}
+.g-meta{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.g-meta .star{color:#f59e0b}
+.g-meta .bili{color:#fb7299}
+.g-meta .so{color:#f48024}
+.g-meta .hn{color:#ff6600}
+
+.g-local{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:12px 12px;margin:0 -12px;border-radius:10px;
+  text-decoration:none;color:inherit;transition:background .15s;
+}
+.g-local:hover{background:var(--surface)}
+.gl-ico{
+  width:36px;height:36px;flex-shrink:0;border-radius:9px;
+  display:grid;place-items:center;font-size:17px;
+  background:var(--surface-2);border:1px solid var(--border);
+}
+.gl-body{min-width:0;flex:1}
+.gl-title{
+  font-size:14px;font-weight:600;color:var(--text);line-height:1.3;
+  display:flex;align-items:center;gap:6px;margin-bottom:3px;
+}
+.gl-title .badge{
+  font-size:9.5px;padding:1px 6px;border-radius:4px;
+  background:var(--accent-dim);color:var(--accent);font-weight:600;
+}
+.gl-desc{
+  font-size:12.5px;color:var(--muted);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.gl-tags{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+.gl-tags span{
+  font-size:10px;padding:1px 6px;border-radius:4px;
+  background:var(--surface-2);color:var(--muted);
+}
+
+.inline-loading{
+  padding:16px 0;font-size:13px;color:var(--muted);
+  display:flex;align-items:center;gap:10px;
+}
+.inline-loading .dotpulse{
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  animation:pulse 1s ease infinite;
+}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
+
+.empty{text-align:center;padding:70px 20px;color:var(--muted)}
+.empty .big{font-size:44px;margin-bottom:16px;opacity:.4}
+.empty h3{font-size:15px;color:var(--text);font-weight:600;margin-bottom:10px}
+.empty p{font-size:13px;line-height:1.7;margin-bottom:20px}
+.empty .links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.empty .links a{
+  padding:8px 16px;border-radius:8px;background:var(--surface);
+  border:1px solid var(--border);color:var(--text);
+  font-size:12.5px;font-weight:500;text-decoration:none;transition:.15s;
+}
+.empty .links a:hover{border-color:var(--accent);color:var(--accent)}
+
+.more-platforms{
+  margin-top:32px;padding:18px 16px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+}
+.mp-title{
+  font-size:12.5px;font-weight:600;color:var(--muted);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.mp-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.mp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px}
+.mp-item{
+  display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:8px;
+  background:var(--bg);border:1px solid var(--border);
+  text-decoration:none;color:var(--text);font-size:12.5px;font-weight:500;transition:.15s;
+}
+.mp-item:hover{border-color:var(--accent);color:var(--accent)}
+.mp-item .ic{font-size:14px}
+
+#directoryTab{display:none}
+body[data-tab="directory"] #searchTab{display:none}
+body[data-tab="directory"] #directoryTab{display:block}
+.directory-wrap{max-width:1200px;margin:0 auto;padding:32px 24px 80px}
+.dir-head{text-align:center;margin-bottom:26px}
+.dir-head h1{font-size:clamp(22px,3.4vw,28px);font-weight:700;letter-spacing:-.5px;margin-bottom:8px}
+.dir-head p{color:var(--muted);font-size:13.5px}
+.cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;justify-content:center}
+.cat{
+  padding:6px 13px;border-radius:8px;font-size:12.5px;font-weight:500;
+  font-family:inherit;background:transparent;border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:.15s;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.cat:hover{background:var(--surface);color:var(--text)}
+.cat.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.cat .cnt{
+  font-size:10.5px;padding:1px 5px;border-radius:4px;
+  background:var(--surface-2);color:var(--muted);
+}
+.cat.on .cnt{background:var(--accent);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.card-wrap{position:relative;animation:cardIn .3s ease backwards}
+.card{
+  display:flex;gap:11px;align-items:flex-start;
+  padding:12px 13px;border-radius:10px;height:100%;
+  background:var(--surface);border:1px solid var(--border);
+  text-decoration:none;color:inherit;
+  transition:border-color .18s,transform .18s;position:relative;
+}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ico{
+  width:36px;height:36px;flex-shrink:0;border-radius:9px;
+  display:grid;place-items:center;font-size:17px;
+  background:var(--surface-2);border:1px solid var(--border);
+}
+.c-body{min-width:0;flex:1}
+.c-title{font-size:13px;font-weight:600;color:var(--text);padding-right:18px;line-height:1.3}
+.c-desc{
+  font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:2px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.c-tags{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:9.5px;padding:1.5px 6px;border-radius:4px;background:var(--surface-2);color:var(--muted)}
+.fav{
+  position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;
+  border-radius:50%;display:grid;place-items:center;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--muted);font-size:11px;cursor:pointer;opacity:0;transition:.15s;font-family:inherit;
+}
+.card-wrap:hover .fav{opacity:1}
+.fav:hover{color:#f59e0b;border-color:#f59e0b}
+.fav.on{opacity:1;color:#f59e0b;border-color:#f59e0b;background:rgba(245,158,11,.1)}
+
+.settings-overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+.settings-overlay.show{opacity:1;pointer-events:auto}
+.settings-panel{
+  position:fixed;top:0;right:0;bottom:0;z-index:201;
+  width:380px;max-width:100%;background:var(--bg);border-left:1px solid var(--border);
+  transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;box-shadow:-8px 0 32px -12px var(--shadow);
+}
+.settings-panel.show{transform:translateX(0)}
+.settings-header{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.settings-header h2{font-size:15px;font-weight:700;flex:1}
+.settings-header .close{
+  width:30px;height:30px;border-radius:8px;border:none;
+  background:transparent;color:var(--muted);cursor:pointer;
+  display:grid;place-items:center;font-size:16px;font-family:inherit;transition:.15s;
+}
+.settings-header .close:hover{background:var(--surface);color:var(--text)}
+.settings-body{flex:1;overflow-y:auto;padding:8px 22px 24px}
+.settings-section{padding:18px 0;border-bottom:1px solid var(--border)}
+.settings-section:last-child{border-bottom:none}
+.settings-section h3{
+  font-size:11.5px;font-weight:700;color:var(--muted);
+  letter-spacing:.6px;text-transform:uppercase;margin-bottom:12px;
+}
+.settings-section p.hint{font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.settings-section p.hint a{color:var(--accent);text-decoration:none}
+.settings-section p.hint a:hover{text-decoration:underline}
+.src-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;cursor:pointer;
+  transition:background .15s;user-select:none;
+}
+.src-item:hover{background:var(--surface)}
+.src-item .src-ic{
+  width:26px;height:26px;border-radius:7px;
+  background:var(--surface);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:13px;flex-shrink:0;
+}
+.src-item .src-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.src-item .src-desc{font-size:11px;color:var(--muted);margin-top:1px}
+.src-item .toggle{
+  width:34px;height:20px;border-radius:10px;background:var(--border-2);
+  position:relative;transition:background .18s;flex-shrink:0;
+}
+.src-item .toggle::after{
+  content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+  border-radius:50%;background:#fff;transition:transform .18s;
+  box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+.src-item.on .toggle{background:var(--accent)}
+.src-item.on .toggle::after{transform:translateX(14px)}
+.src-item.type-tag{
+  font-size:10px;padding:1px 6px;border-radius:4px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--border);
+  flex-shrink:0;margin-right:4px;
+}
+.settings-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px}
+.settings-footer button{
+  flex:1;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:inherit;
+  font-size:12.5px;font-weight:500;cursor:pointer;transition:.15s;
+}
+.settings-footer button:hover{background:var(--surface);color:var(--text);border-color:var(--border-2)}
+.settings-footer button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.settings-footer button.primary:hover{filter:brightness(1.1)}
+
+footer{
+  border-top:1px solid var(--border);padding:24px;text-align:center;
+  color:var(--muted);font-size:12px;line-height:1.8;
+}
+footer b{color:var(--text)}
+
+@media (max-width:680px){
+  .nav{padding:10px 16px}
+  .brand .name{display:none}
+  .icon-btn{padding:0 10px;font-size:12px}
+  .icon-btn .nav-label{display:none}
+  #searchHome{padding:40px 0 60px}
+  .home-wrap{padding:0 18px}
+  .home-sub{margin-bottom:24px}
+  .search-box{height:50px;padding:0 5px 0 14px}
+  .treasure-section{margin-top:48px;padding:0 18px}
+  .treasure-grid{grid-template-columns:1fr;gap:10px}
+  #resultsView{padding:0 16px 60px}
+  .result-bar{top:52px}
+  .result-list{max-width:none}
+  .external-cards{grid-template-columns:1fr 1fr}
+  .g-title{font-size:15.5px}
+  .g-snippet{font-size:13px}
+  .directory-wrap{padding:22px 16px 60px}
+  .grid{grid-template-columns:1fr}
+  .cats{justify-content:flex-start}
+  .fav{opacity:1}
+  .mp-grid{grid-template-columns:repeat(2,1fr)}
+  .settings-panel{width:100%}
+}
+</style>
+</head>
+<body data-tab="search" data-view="home">
+
+<header>
+  <div class="nav">
+    <a class="brand" href="#" onclick="return goHome()">
+      <span class="mark">W</span>
+      <span class="name">Wnebts</span>
+    </a>
+    <div class="nav-spacer"></div>
+    <button class="icon-btn" id="navBtn" title="宝藏导航">
+      <span>🎁</span><span class="nav-label">宝藏导航</span>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="设置">
+      <span>⚙️</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section id="searchTab">
+    <div id="searchHome">
+      <div class="home-wrap">
+        <h1 class="home-title">搜索<span class="accent">全网</span>，发现宝藏</h1>
+        <p class="home-sub">聚合 GitHub、B站、Stack Overflow 等平台的实时结果，一键跳转主流搜索引擎。</p>
+        <div class="search-box">
+          <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>
+          </svg>
+          <input id="qHome" type="text" placeholder="搜索任何内容…" autocomplete="off" spellcheck="false" autofocus>
+          <button class="go-btn" id="goHome">搜索</button>
+        </div>
+        <div class="install-tip">
+          💡 点击浏览器地址栏右键，可把 <b>Wnebts</b> 添加为默认搜索引擎
+        </div>
+      </div>
+
+      <section class="treasure-section">
+        <div class="section-header">
+          <div>
+            <h2><span class="live-dot"></span>互联网新鲜宝藏</h2>
+            <p>实时从 GitHub 与 Hacker News 抓取最新热门项目</p>
+          </div>
+          <button class="refresh" id="refreshTreasures">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+            <span>换一批</span>
+          </button>
+        </div>
+        <div class="treasure-grid" id="treasureGrid">
+          <div class="treasure-loading">
+            <div class="spinner"></div>
+            <div>正在从互联网抓取新鲜内容…</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="resultsView">
+      <div class="result-bar">
+        <div class="bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>
+          </svg>
+          <input id="qResults" type="text" placeholder="搜索…" autocomplete="off" spellcheck="false">
+          <button class="go" id="goResults">搜索</button>
+        </div>
+      </div>
+      <div class="result-stats" id="resultStats"></div>
+      <div class="result-list" id="resultList"></div>
+    </div>
+  </section>
+
+  <section id="directoryTab">
+    <div class="directory-wrap">
+      <div class="dir-head">
+        <h1>全网宝藏站点</h1>
+        <p>大众常用 · 小众冷门 · 白嫖福利 · GitHub 宝藏</p>
+      </div>
+      <nav class="cats" id="cats"></nav>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>Wnebts · 聚合搜索 — 本地收录 <b id="ftTotal">0</b> 个精选站点</div>
+  <div style="font-size:11px;margin-top:4px;opacity:.7">结果来自各平台公开接口 · 收藏保存在本地浏览器</div>
+</footer>
+
+<div class="settings-overlay" id="settingsOverlay"></div>
+<aside class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <h2>设置</h2>
+    <button class="close" id="settingsClose" title="关闭">✕</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-section">
+      <h3>数据源</h3>
+      <p class="hint">
+        <b>实时 API</b>：能从平台直接获取结果，在结果页显示。<br>
+        <b>外部跳转</b>：受同源策略限制，无法在站内显示，会以卡片形式提供跳转。
+      </p>
+      <div id="sourceList"></div>
+    </div>
+    <div class="settings-section">
+      <h3>设为默认搜索引擎</h3>
+      <p class="hint">
+        本页已内置 OpenSearch 协议。在你的浏览器地址栏上<b>右键</b> →
+        <b>添加 Wnebts 为搜索引擎</b>，之后在地址栏输入关键词回车即可直接搜索。
+      </p>
+    </div>
+    <div class="settings-section">
+      <h3>快速操作</h3>
+      <div id="quickActions"></div>
+    </div>
+    <div class="settings-section">
+      <h3>关于</h3>
+      <p class="hint" style="margin-bottom:0">
+        Wnebts 是一个多源聚合搜索。收藏与设置保存在浏览器本地，不会上传。
+      </p>
+    </div>
+  </div>
+  <div class="settings-footer">
+    <button id="settingsReset">重置数据源</button>
+    <button class="primary" id="settingsDone">完成</button>
+  </div>
+</aside>
+
+<script>
+/* =========================================================
+   分类与本地数据
+   ========================================================= */
+const CATS = [
+  {id:'all',    name:'全部',      icon:'✨'},
+  {id:'free',   name:'白嫖福利',  icon:'🎁'},
+  {id:'steam',  name:'Steam入库', icon:'🎮'},
+  {id:'gh',     name:'GitHub宝藏',icon:'🐙'},
+  {id:'eff',    name:'效率工具',  icon:'⚡'},
+  {id:'dev',    name:'开发编程',  icon:'💻'},
+  {id:'ai',     name:'AI智能',   icon:'🤖'},
+  {id:'design', name:'设计素材',  icon:'🎨'},
+  {id:'learn',  name:'学习知识',  icon:'📚'},
+  {id:'media',  name:'影音娱乐',  icon:'🎬'},
+  {id:'soft',   name:'宝藏软件',  icon:'🧰'},
+  {id:'tool',   name:'在线工具',  icon:'🔧'},
+  {id:'info',   name:'资源资讯',  icon:'🔍'},
+  {id:'fun',    name:'冷门趣味',  icon:'🎲'}
+];
+
+const RAW_TEXT = `
+Yistar Line|yistarline.icu|个人技术站点与项目分享|gh|⭐|个人,项目,分享
+pcstory 蘑菇下载器|pcstory.fun|海量单机与网游下载,支持Steam/Epic等平台,直接运行无需解压|steam|🍄|游戏下载,免费
+SteamToolsManager|github.com/ecxwxz/steamtoolsmanager|Steam Manifest 下载器与自动入库工具整合版|steam|🔧|Steam,入库,开源
+OSTGUI|github.com/hazjy/OSTGUI|Steam 本地入库图形界面|steam|🎮|Steam,入库
+GreenLuma GUI|github.com/Cranch-fur/GreenLuma-GUI|GreenLuma 图形化管理工具|steam|💚|GreenLuma,入库
+LuckyGameTools|github.com/luckygametools/luckygametools.github.io|一键自动入库Steam游戏工具|steam|🍀|Steam,入库
+ManifestHub-GUI|github.com/SLSYSL/ManifestHub-GUI|开源Steam清单入库管理工具|steam|📦|Steam,清单
+Steam++|steampp.net|Steam工具箱:加速/令牌/库存管理|steam|➕|Steam,工具箱
+ASFFreeGames|github.com/maxisoft/ASFFreeGames|ASF插件:自动领取免费Steam游戏|steam|🤖|ASF,免费游戏
+SteamDB|steamdb.info|Steam数据查询与免费游戏追踪|steam|📊|数据,追踪
+Notion|notion.so|笔记与知识库一体化|eff|📝|笔记,协作
+Excalidraw|excalidraw.com|手绘风在线白板|eff|✏️|白板,手绘
+LocalSend|localsend.org|局域网跨平台传文件|eff|📡|传输,开源
+Snipaste|snipaste.com|截图贴图神器|eff|📌|截图,Windows
+uTools|u.tools|效率启动器|eff|⌨️|启动器,插件
+Everything|voidtools.com|秒级文件搜索|eff|🔎|搜索,Windows
+PowerToys|github.com/microsoft/PowerToys|微软效率工具集|eff|🧩|微软,开源
+Stirling PDF|stirlingpdf.com|可自部署PDF工具箱|eff|📄|PDF,自部署
+Obsidian|obsidian.md|本地优先双链笔记|eff|💎|笔记,本地
+DeepL|deepl.com|翻译质量口碑极佳|eff|🔠|翻译,工具
+Raindrop|raindrop.io|书签收藏管理|eff|💧|书签,跨平台
+Pocket|getpocket.com|稍后读服务|eff|🧳|稍后读,阅读
+Todoist|todoist.com|经典待办事项|eff|✅|待办,GTD
+Anki|apps.ankiweb.net|间隔重复记忆卡片|eff|🃏|记忆,学习
+Raycast|raycast.com|Mac效率启动器|eff|🚀|Mac,启动器
+fzf|github.com/junegunn/fzf|命令行模糊查找|eff|🌫️|命令行,查找
+ripgrep|github.com/BurntSushi/ripgrep|极速代码搜索|eff|🏃|命令行,搜索
+Warp|warp.dev|AI驱动终端|eff|🌩️|终端,AI
+Windows Terminal|github.com/microsoft/terminal|微软终端|eff|🪟|终端,微软
+tmux|github.com/tmux/tmux|终端复用器|eff|🖥️|终端,复用
+Oh My Zsh|ohmyzsh.sh|zsh配置框架|eff|🐚|Shell,配置
+btop|github.com/aristocratos/btop|系统资源监控|eff|📈|监控,系统
+lazygit|github.com/jesseduffield/lazygit|终端Git界面|eff|🐢|Git,终端
+GitHub|github.com|全球最大代码托管|dev|🐙|代码,社区
+GitLab|gitlab.com|一体化DevOps平台|dev|🦊|代码,DevOps
+Gitee|gitee.com|国内代码托管|dev|🇨🇳|代码,国内
+MDN|developer.mozilla.org|Web开发权威文档|dev|📖|文档,前端
+DevDocs|devdocs.io|多语言文档聚合|dev|🗃️|文档,聚合
+Can I use|caniuse.com|浏览器兼容性查询|dev|🌐|兼容性,前端
+Regex101|regex101.com|正则调试神器|dev|🔣|正则,调试
+IT-Tools|it-tools.tech|开发者在线工具箱|dev|🧪|工具箱,开源
+JSON Crack|jsoncrack.com|JSON可视化|dev|🕸️|JSON,可视化
+Hoppscotch|hoppscotch.io|开源API调试|dev|🚀|API,开源
+Stack Overflow|stackoverflow.com|程序员问答社区|dev|📚|问答,社区
+CodePen|codepen.io|前端代码分享|dev|🖊️|前端,分享
+Hugging Face|huggingface.co|AI模型社区|dev|🤗|模型,社区
+Vercel|vercel.com|前端部署平台|dev|▲|部署,前端
+Netlify|netlify.com|静态站点托管|dev|🌐|部署,静态
+Docker Hub|hub.docker.com|容器镜像仓库|dev|🐳|Docker,镜像
+Kubernetes|kubernetes.io|容器编排系统|dev|☸️|K8s,容器
+Postman|postman.com|API开发协作|dev|📮|API,测试
+GraphQL|graphql.org|API查询语言|dev|◼️|API,查询
+Supabase|supabase.com|开源Firebase替代|dev|⚡|后端,开源
+Firebase|firebase.google.com|谷歌后端平台|dev|🔥|后端,Google
+Ghost|ghost.org|现代博客平台|dev|👻|博客,开源
+WordPress|wordpress.org|全球最流行建站|dev|📝|建站,CMS
+Hugo|gohugo.io|极速静态站点|dev|⚡|静态,Go
+Next.js|nextjs.org|React全栈框架|dev|▲|React,框架
+Nuxt|nuxt.com|Vue全栈框架|dev|💚|Vue,框架
+SvelteKit|kit.svelte.dev|Svelte全栈框架|dev|🧡|Svelte,框架
+Astro|astro.build|内容优先框架|dev|🚀|静态,框架
+Vite|vitejs.dev|下一代构建工具|dev|⚡|构建,前端
+ESLint|eslint.org|JS代码检查|dev|🔍|检查,JS
+Prettier|prettier.io|代码格式化|dev|💅|格式化,代码
+npm|npmjs.com|Node包管理器|dev|📦|包管理,Node
+pnpm|pnpm.io|省空间包管理器|dev|📦|包管理,Node
+Bun|bun.sh|全能JS运行时|dev|🍞|运行时,JS
+Deno|deno.com|安全JS运行时|dev|🦕|运行时,JS
+Node.js|nodejs.org|服务端JS运行时|dev|🟢|运行时,JS
+Homebrew|brew.sh|Mac包管理器|dev|🍺|包管理,Mac
+Scoop|scoop.sh|Windows命令行安装|dev|🥄|包管理,Windows
+PyPI|pypi.org|Python包索引|dev|🐍|包管理,Python
+uv|github.com/astral-sh/uv|极速Python包管理|dev|⚡|Python,包管理
+Cargo|crates.io|Rust包管理|dev|🦀|Rust,包管理
+Go|go.dev|Go语言官网|dev|🐹|Go,语言
+Swift|swift.org|苹果编程语言|dev|🐦|Swift,语言
+Kotlin|kotlinlang.org|JVM现代语言|dev|🟪|Kotlin,语言
+Zig|ziglang.org|系统编程新星|dev|⚡|Zig,语言
+Figma|figma.com|协作UI设计|design|🎯|UI,协作
+Unsplash|unsplash.com|免费高清图片|design|📷|图库,免费
+Pexels|pexels.com|免费图片视频|design|🎥|图库,视频
+unDraw|undraw.co|免费可商用插画|design|🎨|插画,免费
+Iconify|iconify.design|十几万图标聚合|design|🔷|图标,聚合
+Lucide|lucide.dev|极简开源图标|design|✨|图标,开源
+Fontshare|fontshare.com|高质量免费字体|design|🔤|字体,免费
+Google Fonts|fonts.google.com|免费开源字体|design|🅰️|字体,Google
+Coolors|coolors.co|配色方案生成|design|🌈|配色,工具
+Photopea|photopea.com|网页版PS|design|🖌️|修图,在线
+iconfont|iconfont.cn|阿里矢量图标库|design|🐜|图标,国内
+remove.bg|remove.bg|一键智能抠图|design|✂️|抠图,AI
+Canva|canva.com|在线平面设计|design|🖼️|设计,模板
+Penpot|penpot.app|开源设计工具|design|🖋️|设计,开源
+Framer|framer.com|高保真网页设计|design|🖼️|设计,网页
+Lottiefiles|lottiefiles.com|Lottie动画库|design|🎞️|动画,素材
+Dribbble|dribbble.com|设计师作品社区|design|🏀|社区,作品
+Behance|behance.net|Adobe设计社区|design|🅱️|社区,作品
+Awwwards|awwwards.com|网页设计评奖|design|🏆|网页,评奖
+Pinterest|pinterest.com|图片灵感社区|design|📌|图片,灵感
+花瓣|huaban.com|国内图片采集|design|🌸|图片,国内
+站酷|zcool.com.cn|国内设计社区|design|🎨|社区,国内
+UI中国|ui.cn|UI设计社区|design|🇨🇳|UI,社区
+优设|uisdc.com|设计教程与资讯|design|📐|教程,设计
+Iconfinder|iconfinder.com|图标搜索引擎|design|🔍|图标,搜索
+Flaticon|flaticon.com|海量免费图标|design|📐|图标,免费
+Feather Icons|feathericons.com|极简线性图标|design|🪶|图标,线性
+Heroicons|heroicons.com|Tailwind官方图标|design|🦸|图标,Tailwind
+Simple Icons|simpleicons.org|品牌Logo图标|design|🏷️|图标,品牌
+Color Hunt|colorhunt.co|四色配色方案|design|🎨|配色,方案
+Adobe Color|color.adobe.com|Adobe配色工具|design|🎨|配色,Adobe
+Fontjoy|fontjoy.com|AI字体搭配|design|🤖|字体,AI
+Fontpair|fontpair.co|字体配对灵感|design|🔤|字体,配对
+DaFont|dafont.com|海量免费字体|design|🔤|字体,免费
+Pixlr|pixlr.com|在线修图工具|design|🖼️|修图,在线
+iLoveIMG|iloveimg.com|在线图片工具箱|design|🖼️|图片,工具
+iLovePDF|ilovepdf.com|在线PDF工具|design|📄|PDF,工具
+Smallpdf|smallpdf.com|PDF在线处理|design|📄|PDF,工具
+菜鸟教程|runoob.com|编程入门教程|learn|🐣|教程,入门
+Hello算法|hello-algo.com|动画图解算法|learn|🧮|算法,开源
+CS自学指南|csdiy.wiki|计算机自学路线|learn|🗺️|计算机,路线
+廖雪峰|liaoxuefeng.com|编程教程博客|learn|📗|教程,编程
+中国大学MOOC|icourse163.org|国内名校课程|learn|🎓|课程,高校
+Khan Academy|khanacademy.org|免费综合课程|learn|🧠|课程,免费
+Coursera|coursera.org|全球名校在线课|learn|🌍|课程,国际
+edX|edx.org|哈佛MIT在线课|learn|🎓|课程,名校
+freeCodeCamp|freecodecamp.org|免费编程学习|learn|🔥|编程,免费
+MIT OCW|ocw.mit.edu|MIT开放课程|learn|🏛️|MIT,课程
+学堂在线|xuetangx.com|清华发起慕课|learn|🏫|慕课,国内
+网易公开课|open.163.com|网易公开课|learn|📺|公开课,国内
+慕课网|imooc.com|IT技能学习|learn|💻|编程,课程
+极客时间|time.geekbang.org|技术人学习平台|learn|⏰|技术,课程
+Project Gutenberg|gutenberg.org|七万本免费电子书|learn|📜|电子书,免费
+多邻国|duolingo.com|游戏化语言学习|learn|🦉|语言,游戏化
+3Blue1Brown|3blue1brown.com|动画讲数学|learn|📐|数学,视频
+有道|youdao.com|翻译与词典|learn|🔠|翻译,词典
+扇贝|shanbay.com|英语学习社区|learn|🐚|英语,学习
+百词斩|baicizhan.com|图背单词|learn|📸|单词,记忆
+墨墨背单词|maimemo.com|记忆曲线背词|learn|📝|单词,记忆
+欧路词典|eudic.net|跨平台词典|learn|📘|词典,跨平台
+Grammarly|grammarly.com|英语语法检查|learn|✍️|语法,检查
+Wolfram Alpha|wolframalpha.com|计算知识引擎|learn|🧮|计算,知识
+Desmos|desmos.com|在线图形计算器|learn|📈|数学,图形
+GeoGebra|geogebra.org|数学几何工具|learn|📐|数学,几何
+Brilliant|brilliant.org|交互式数理学习|learn|💡|数理,交互
+LeetCode|leetcode.com|算法刷题平台|learn|🧩|算法,面试
+LeetCode CN|leetcode.cn|力扣中国站|learn|🧩|算法,国内
+HackerRank|hackerrank.com|编程技能测评|learn|📊|编程,测评
+Codewars|codewars.com|编程武士挑战|learn|⚔️|编程,挑战
+Codeforces|codeforces.com|算法竞赛平台|learn|🏆|竞赛,算法
+洛谷|luogu.com.cn|国内算法竞赛|learn|🐄|竞赛,国内
+牛客|nowcoder.com|求职笔试面试|learn|🐮|求职,面试
+Kaggle|kaggle.com|数据科学竞赛|learn|📊|数据,竞赛
+Papers With Code|paperswithcode.com|论文与代码|learn|📄|论文,代码
+arXiv|arxiv.org|预印本论文库|learn|📑|论文,预印本
+Semantic Scholar|semanticscholar.org|AI学术搜索|learn|🎓|学术,搜索
+Sci-Hub|sci-hub.se|论文开放获取|learn|📄|论文,下载
+Library Genesis|libgen.is|电子书图书馆|learn|📚|电子书,下载
+Z-Library|z-lib.io|大型电子书库|learn|📕|电子书,下载
+Open Library|openlibrary.org|互联网图书馆|learn|📖|图书,借阅
+Internet Archive|archive.org|互联网档案馆|learn|🏛️|档案,免费
+豆瓣读书|book.douban.com|中文图书评分|learn|📗|图书,评分
+Goodreads|goodreads.com|全球读书社区|learn|📚|图书,社区
+Calibre|calibre-ebook.com|电子书管理神器|learn|📚|电子书,管理
+Zotero|zotero.org|开源文献管理|learn|📚|文献,管理
+哔哩哔哩|bilibili.com|国内最大视频社区|media|📺|视频,国内
+YouTube|youtube.com|全球最大视频平台|media|▶️|视频,国际
+网易云音乐|music.163.com|国内音乐平台|media|🎧|音乐,国内
+Spotify|open.spotify.com|全球音乐流媒体|media|🎵|音乐,国际
+豆瓣|douban.com|书影音评分社区|media|🌱|评分,社区
+小宇宙|xiaoyuzhoufm.com|中文播客平台|media|🎙️|播客,国内
+Netflix|netflix.com|全球流媒体巨头|media|🎬|影视,国际
+爱奇艺|iqiyi.com|国内视频平台|media|🎬|视频,国内
+腾讯视频|v.qq.com|腾讯视频|media|🐧|视频,国内
+优酷|youku.com|阿里视频平台|media|🎥|视频,国内
+芒果TV|mgtv.com|湖南卫视视频|media|🥭|视频,国内
+抖音|douyin.com|短视频平台|media|🎵|短视频,国内
+快手|kuaishou.com|短视频社区|media|⚡|短视频,国内
+小红书|xiaohongshu.com|生活方式社区|media|📕|社区,国内
+微博|weibo.com|中文微博平台|media|📢|微博,国内
+知乎|zhihu.com|中文问答社区|media|🔵|问答,国内
+斗鱼|douyu.com|国内游戏直播|media|🐟|直播,国内
+虎牙|huya.com|国内游戏直播|media|🐯|直播,国内
+IMDb|imdb.com|全球影视数据库|media|🎬|影视,数据库
+Rotten Tomatoes|rottentomatoes.com|烂番茄影评|media|🍅|影评,评分
+Metacritic|metacritic.com|综合评分网站|media|📊|评分,综合
+TMDB|themoviedb.org|影视元数据库|media|🎬|影视,数据库
+时光网|mtime.com|国内电影社区|media|⏰|电影,国内
+猫眼|maoyan.com|电影购票评分|media|🐱|电影,购票
+豆瓣电影|movie.douban.com|中文电影评分|media|🎬|电影,评分
+Discogs|discogs.com|音乐唱片数据库|media|💿|音乐,唱片
+MusicBrainz|musicbrainz.org|开放音乐数据库|media|🧠|音乐,数据库
+Genius|genius.com|歌词与解析|media|🧠|歌词,解析
+ChatGPT|chat.openai.com|OpenAI对话AI|ai|💬|对话,OpenAI
+Claude|claude.ai|Anthropic对话AI|ai|🎭|对话,Anthropic
+Gemini|gemini.google.com|谷歌多模态AI|ai|♊|对话,Google
+DeepSeek|chat.deepseek.com|国产开源大模型|ai|🐋|对话,国产
+Kimi|kimi.moonshot.cn|超长上下文AI|ai|🌙|对话,国产
+Ollama|ollama.com|本地运行大模型|ai|🦙|本地,开源
+OpenRouter|openrouter.ai|多模型统一API|ai|🛰️|API,聚合
+Suno|suno.com|AI生成完整歌曲|ai|🎼|音乐,生成
+ElevenLabs|elevenlabs.io|自然AI语音合成|ai|🔊|语音,合成
+Civitai|civitai.com|AI绘画模型社区|ai|🖼️|绘画,模型
+Cursor|cursor.com|AI原生代码编辑器|ai|⌨️|编程,编辑器
+即梦AI|jimeng.jianying.com|字节AI创作平台|ai|🎬|绘画,国产
+通义千问|tongyi.aliyun.com|阿里大模型|ai|☁️|对话,国产
+文心一言|yiyan.baidu.com|百度大模型|ai|🐻|对话,国产
+豆包|doubao.com|字节AI助手|ai|🫘|对话,国产
+Midjourney|midjourney.com|顶级AI绘画|ai|🎨|绘画,生成
+Stable Diffusion|stability.ai|开源图像生成|ai|🖌️|绘画,开源
+Runway|runwayml.com|AI视频创作|ai|🎥|视频,生成
+HeyGen|heygen.com|AI数字人视频|ai|👤|数字人,视频
+Descript|descript.com|AI音视频编辑|ai|✂️|编辑,AI
+CapCut|capcut.com|字节视频剪辑|ai|🎬|剪辑,字节
+剪映|jianying.com|国内视频剪辑|ai|✂️|剪辑,国内
+Otter.ai|otter.ai|会议记录AI|ai|🦦|会议,记录
+Sider|sider.ai|浏览器AI助手|ai|📌|插件,助手
+Monica|monica.im|AI浏览器助手|ai|🌐|插件,助手
+Poe|poe.com|多AI聚合平台|ai|🤖|聚合,对话
+Character.AI|character.ai|AI角色扮演|ai|🎭|角色,对话
+Bandizip|bandisoft.com/bandizip|清爽压缩软件|soft|🗜️|压缩,Windows
+PotPlayer|potplayer.daum.net|全能视频播放器|soft|🎬|播放器,Windows
+VLC|videolan.org|开源万能播放器|soft|🚦|播放器,开源
+7-Zip|7-zip.org|开源免费压缩|soft|7️⃣|压缩,开源
+ShareX|getsharex.com|截图录屏神器|soft|📸|截图,开源
+WizTree|diskanalyzer.com|秒速磁盘分析|soft|🌳|磁盘,分析
+Geek Uninstaller|geekuninstaller.com|彻底卸载清理|soft|🧹|卸载,工具
+Rufus|rufus.ie|制作启动U盘|soft|💾|U盘,启动
+Ventoy|ventoy.net|一个U盘多系统|soft|🧿|U盘,多系统
+火绒安全|huorong.cn|干净不弹窗安全软件|soft|🛡️|安全,国产
+Files|files.community|Windows高颜值文件管理|soft|📁|文件管理,开源
+Motrix|motrix.app|全能下载器|soft|⬇️|下载,开源
+QuickLook|github.com/QL-Win/QuickLook|空格键预览文件|soft|👁️|预览,开源
+Dism++|github.com/Chuyu-Team/Dism-Multi-language|系统精简优化|soft|🧴|系统,优化
+WinRAR|rarlab.com|经典压缩软件|soft|📚|压缩,经典
+Daemon Tools|daemon-tools.cc|虚拟光驱|soft|💿|光驱,虚拟
+VeraCrypt|veracrypt.fr|开源磁盘加密|soft|🔐|加密,开源
+balenaEtcher|etcher.balena.io|镜像写入U盘|soft|⚡|U盘,镜像
+微PE|wepe.com.cn|纯净PE工具箱|soft|🛠️|PE,国产
+DiskGenius|diskgenius.cn|磁盘管理恢复|soft|💽|磁盘,数据恢复
+CrystalDiskInfo|crystalmark.info|硬盘健康检测|soft|💎|硬盘,检测
+AIDA64|aida64.com|硬件检测工具|soft|🔬|硬件,检测
+CPU-Z|cpuid.com|CPU信息检测|soft|🔲|CPU,检测
+GPU-Z|techpowerup.com/gpuz|显卡信息检测|soft|🎮|GPU,检测
+HWiNFO|hwinfo.com|专业硬件信息|soft|📊|硬件,信息
+Revo Uninstaller|revouninstaller.com|强力卸载工具|soft|🗑️|卸载,强力
+CCleaner|ccleaner.com|系统清理工具|soft|🧹|清理,系统
+BleachBit|bleachbit.org|开源系统清理|soft|🧴|清理,开源
+Wise Care 365|wisecleaner.com|系统优化套件|soft|🧠|优化,系统
+MiniTool Partition Wizard|partitionwizard.com|分区管理|soft|✂️|分区,管理
+AOMEI Partition|aomei.cn|傲梅分区助手|soft|🧩|分区,国产
+Macrium Reflect|macrium.com|系统备份还原|soft|💾|备份,还原
+Clonezilla|clonezilla.org|开源克隆工具|soft|🐧|克隆,开源
+今日热榜|tophub.today|全网热搜聚合|info|🔥|热榜,聚合
+少数派|sspai.com|数字生活媒体|info|📰|媒体,效率
+阮一峰的网络日志|ruanyifeng.com/blog|科技爱好者周刊|info|📔|博客,周刊
+HelloGitHub|hellogithub.com|每月开源项目分享|info|🐙|开源,月刊
+异次元软件|iplaysoft.com|老牌软件推荐|info|🛸|软件,推荐
+果核剥壳|ghxi.com|纯净软件分享|info|🥜|软件,分享
+蓝点网|landian.news|科技资讯与软件|info|🔵|资讯,科技
+什么值得买|smzdm.com|购物优惠推荐|info|🛒|购物,优惠
+一个工具箱|atoolbox.net|几百个在线工具|info|🧰|工具,在线
+稀土掘金|juejin.cn|国内技术社区|info|⛏️|社区,技术
+V2EX|v2ex.com|创意工作者社区|info|💡|社区,创意
+虎嗅|huxiu.com|商业科技资讯|info|🐅|商业,资讯
+36氪|36kr.com|创业投资资讯|info|📈|创投,资讯
+爱范儿|ifanr.com|消费科技媒体|info|📱|科技,媒体
+IT之家|ithome.com|IT资讯门户|info|🏠|IT,资讯
+快科技|mydrivers.com|硬件资讯|info|⚡|硬件,资讯
+中关村在线|zol.com.cn|IT产品资讯|info|🏢|IT,产品
+太平洋电脑网|pconline.com.cn|电脑资讯评测|info|💻|电脑,评测
+游民星空|gamersky.com|游戏资讯|info|🎮|游戏,资讯
+3DM|3dmgame.com|游戏资讯门户|info|3️⃣|游戏,资讯
+机核|gcores.com|游戏文化社区|info|🎧|游戏,文化
+企查查|qcc.com|企业信息查询|info|🔍|企业,查询
+天眼查|tianyancha.com|企业信息查询|info|👁️|企业,查询
+Neal.fun|neal.fun|脑洞互动网站合集|fun|🎈|趣味,互动
+Window Swap|window-swap.com|看世界各地窗外|fun|🪟|趣味,治愈
+The Useless Web|theuselessweb.com|无用但有趣网站|fun|🌀|趣味,随机
+Zoomquilt|zoomquilt.org|无限放大插画|fun|🔭|视觉,无限
+Akinator|en.akinator.com|神灯猜人物|fun|🧞|游戏,猜谜
+Quick Draw|quickdraw.withgoogle.com|AI你画我猜|fun|🖍️|游戏,AI
+GeoGuessr|geoguessr.com|街景猜地理位置|fun|🌏|游戏,地理
+网页时光机|web.archive.org|看网站历史版本|fun|⏳|怀旧,存档
+Virtual Piano|virtualpiano.net|键盘弹钢琴|fun|🎹|音乐,互动
+Monkeytype|monkeytype.com|极简打字练习|fun|⌨️|打字,练习
+Rainy Mood|rainymood.com|纯雨声白噪音|fun|☔|白噪音,治愈
+Wordle|nytimes.com/games/wordle|每日单词猜谜|fun|🟩|游戏,单词
+This Is Sand|thisissand.com|彩色沙子解压|fun|⏱️|解压,绘画
+Earth Nullschool|earth.nullschool.net|全球风场可视化|fun|🌬️|可视化,地球
+Line Rider|linerider.com|画线雪橇游戏|fun|🛷|游戏,物理
+Weavesilk|weavesilk.com|对称光绘艺术|fun|🧵|艺术,生成
+Patatap|patatap.com|按键发声动画|fun|🥁|音乐,互动
+Incredibox|incredibox.com|节奏口技创作|fun|🎤|音乐,创作
+Calm|calm.com|冥想与睡眠|fun|🧘‍♂️|冥想,睡眠
+Headspace|headspace.com|冥想指导|fun|🧠|冥想,指导
+Noisli|noisli.com|环境音混音|fun|🎚️|白噪音,混音
+free-for.dev|free-for.dev|开发者免费资源大全|free|🆓|免费,开发者
+GitHub Student Pack|education.github.com/pack|学生开发者大礼包|free|🎓|学生,礼包
+Cloudflare|cloudflare.com|免费CDN与防护|free|☁️|CDN,免费
+Vercel|vercel.com|前端免费部署|free|▲|部署,免费
+Netlify|netlify.com|静态站点免费托管|free|🌐|托管,免费
+Supabase|supabase.com|开源Firebase替代|free|⚡|后端,免费
+Firebase|firebase.google.com|谷歌后端免费层|free|🔥|后端,Google
+PlanetScale|planetscale.com|MySQL免费层|free|🪐|数据库,免费
+Neon|neon.tech|Serverless Postgres|free|🐘|数据库,Postgres
+Turso|turso.tech|边缘SQLite|free|🐢|数据库,SQLite
+Upstash|upstash.com|Serverless Redis|free|⚡|Redis,免费
+MongoDB Atlas|mongodb.com/atlas|免费MongoDB集群|free|🍃|数据库,MongoDB
+Clerk|clerk.com|免费用户认证|free|🔐|认证,免费
+Auth0|auth0.com|免费身份认证|free|🔑|认证,免费
+Resend|resend.com|免费邮件API|free|📧|邮件,API
+SendGrid|sendgrid.com|免费邮件发送|free|📨|邮件,免费
+Cloudinary|cloudinary.com|免费图片托管|free|🖼️|图片,CDN
+ImageKit|imagekit.io|免费图片优化|free|🖼️|图片,优化
+Bunny.net|bunny.net|便宜CDN与存储|free|🐰|CDN,存储
+Backblaze B2|backblaze.com|便宜云存储|free|🔥|存储,备份
+IDrive|idrive.com|免费云备份|free|💾|备份,云
+pCloud|pcloud.com|免费云盘|free|☁️|云盘,免费
+Mega|mega.io|免费加密云盘|free|🔐|云盘,加密
+TeraBox|terabox.com|1TB免费云盘|free|📦|云盘,免费
+Namecheap|namecheap.com|便宜域名与SSL|free|🏷️|域名,SSL
+Let's Encrypt|letsencrypt.org|免费SSL证书|free|🔒|SSL,免费
+ZeroSSL|zerossl.com|免费SSL证书|free|🔐|SSL,免费
+EU.org|nic.eu.org|免费eu.org域名|free|🇪🇺|域名,免费
+DuckDNS|duckdns.org|免费动态DNS|free|🦆|DNS,免费
+NextDNS|nextdns.io|免费DNS过滤|free|🛡️|DNS,过滤
+JetBrains Student|jetbrains.com/student|学生免费全家桶|free|🧠|学生,IDE
+Figma Education|figma.com/education|教育免费Figma|free|🎨|教育,设计
+Notion Education|notion.so/product/notion-for-education|教育免费Notion|free|📝|教育,笔记
+GitHub Copilot Free|github.com/features/copilot|免费Copilot额度|free|🤖|AI,编程
+Microsoft 365 Education|microsoft.com/education|教育免费Office|free|📊|教育,Office
+OpenStax|openstax.org|免费教科书|free|📚|教科书,免费
+LibriVox|librivox.org|免费有声书|free|🎧|有声书,免费
+Pixabay|pixabay.com|免费图片视频音乐|free|🎨|素材,免费
+Vecteezy|vecteezy.com|免费矢量素材|free|🔷|矢量,免费
+Freepik|freepik.com|免费设计素材|free|🎨|素材,免费
+Freesound|freesound.org|免费音效库|free|🔊|音效,免费
+Mixkit|mixkit.co|免费视频音乐素材|free|🎬|素材,免费
+Bensound|bensound.com|免费背景音乐|free|🎵|音乐,免费
+Free Music Archive|freemusicarchive.org|免费音乐库|free|🎵|音乐,免费
+OpenGameArt|opengameart.org|免费游戏素材|free|🎮|游戏,素材
+Kenney|kenney.nl|免费游戏资源|free|🎮|游戏,资源
+Epic Free Games|store.epicgames.com/free-games|Epic每周免费|free|🎁|游戏,免费
+Steam Free|store.steampowered.com/genre/Free%20to%20Play|Steam免费游戏|free|🎮|游戏,免费
+GamerPower|gamerpower.com|免费游戏追踪|free|🎮|游戏,追踪
+IsThereAnyDeal|isthereanydeal.com|游戏比价与免费|free|💰|游戏,比价
+awesome|github.com/sindresorhus/awesome|各种Awesome清单总汇|gh|😎|清单,合集
+awesome-selfhosted|github.com/awesome-selfhosted/awesome-selfhosted|自托管服务大全|gh|🏠|自托管,清单
+awesome-python|github.com/vinta/awesome-python|Python资源大全|gh|🐍|Python,清单
+awesome-go|github.com/avelino/awesome-go|Go资源大全|gh|🐹|Go,清单
+awesome-javascript|github.com/sorrycc/awesome-javascript|JS资源大全|gh|📜|JS,清单
+awesome-nodejs|github.com/sindresorhus/awesome-nodejs|Node资源大全|gh|🟢|Node,清单
+awesome-react|github.com/enaqx/awesome-react|React资源大全|gh|⚛️|React,清单
+awesome-vue|github.com/vuejs/awesome-vue|Vue资源大全|gh|💚|Vue,清单
+awesome-rust|github.com/rust-unofficial/awesome-rust|Rust资源大全|gh|🦀|Rust,清单
+awesome-mac|github.com/jaywcjlove/awesome-mac|Mac软件大全|gh|🍎|Mac,清单
+awesome-windows|github.com/Awesome-Windows/Awesome|Windows软件大全|gh|🪟|Windows,清单
+awesome-android|github.com/JStumpp/awesome-android|安卓资源大全|gh|🤖|安卓,清单
+awesome-ios|github.com/vsouza/awesome-ios|iOS资源大全|gh|📱|iOS,清单
+awesome-docker|github.com/veggiemonk/awesome-docker|Docker资源大全|gh|🐳|Docker,清单
+awesome-kubernetes|github.com/ramitsurana/awesome-kubernetes|K8s资源大全|gh|☸️|K8s,清单
+awesome-security|github.com/sbilly/awesome-security|安全资源大全|gh|🛡️|安全,清单
+awesome-machine-learning|github.com/josephmisiti/awesome-machine-learning|机器学习资源|gh|🤖|机器学习,清单
+awesome-deep-learning|github.com/ChristosChristofidis/awesome-deep-learning|深度学习资源|gh|🧠|深度学习,清单
+awesome-llm|github.com/Hannibal046/Awesome-LLM|大语言模型资源|gh|🗣️|LLM,清单
+awesome-chatgpt|github.com/humanloop/awesome-chatgpt|ChatGPT资源|gh|💬|ChatGPT,清单
+awesome-generative-ai|github.com/steven2358/awesome-generative-ai|生成式AI资源|gh|✨|生成式,AI
+awesome-ai-tools|github.com/mahseema/awesome-ai-tools|AI工具大全|gh|🤖|AI,工具
+build-your-own-x|github.com/codecrafters-io/build-your-own-x|从零构建各种技术|gh|🔨|学习,构建
+coding-interview-university|github.com/jwasham/coding-interview-university|面试准备大全|gh|🎓|面试,学习
+developer-roadmap|github.com/kamranahmedse/developer-roadmap|开发者路线图|gh|🗺️|路线,学习
+free-programming-books|github.com/EbookFoundation/free-programming-books|免费编程书|gh|📚|书籍,免费
+project-based-learning|github.com/practical-tutorials/project-based-learning|项目驱动学习|gh|🛠️|学习,项目
+system-design-primer|github.com/donnemartin/system-design-primer|系统设计入门|gh|🏗️|系统设计,学习
+the-art-of-command-line|github.com/jlevy/the-art-of-command-line|命令行艺术|gh|⌨️|命令行,教程
+tech-interview-handbook|github.com/yangshun/tech-interview-handbook|技术面试手册|gh|📘|面试,手册
+You-Dont-Know-JS|github.com/getify/You-Dont-Know-JS|JS深入系列|gh|📜|JS,学习
+30-seconds-of-code|github.com/Chalarangelo/30-seconds-of-code|30秒代码片段|gh|⏱️|代码,片段
+javascript-algorithms|github.com/trekhleb/javascript-algorithms|JS算法实现|gh|🧮|算法,JS
+python-patterns|github.com/faif/python-patterns|Python设计模式|gh|🎨|设计模式,Python
+design-patterns-for-humans|github.com/kamranahmedse/design-patterns-for-humans|设计模式入门|gh|🧩|设计模式,入门
+clean-code-javascript|github.com/ryanmcdermott/clean-code-javascript|JS整洁代码|gh|✨|整洁代码,JS
+cheat.sh|github.com/chubin/cheat.sh|命令行速查|gh|💡|速查,命令行
+tldr|github.com/tldr-pages/tldr|简化man手册|gh|📖|文档,命令
+mermaid|github.com/mermaid-js/mermaid|文本生成图表|gh|🧜|图表,Markdown
+drawio|github.com/jgraph/drawio|在线图表工具|gh|📊|图表,绘图
+appflowy|github.com/AppFlowy-IO/AppFlowy|开源Notion替代|gh|📝|笔记,开源
+siyuan|github.com/siyuan-note/siyuan|思源笔记|gh|📓|笔记,国产
+joplin|github.com/laurent22/joplin|开源笔记|gh|📔|笔记,开源
+memos|github.com/usememos/memos|轻量笔记服务|gh|📝|笔记,轻量
+outline|github.com/outline/outline|团队知识库|gh|📚|知识库,团队
+bookstack|github.com/BookStackApp/BookStack|文档管理|gh|📖|文档,管理
+wiki.js|github.com/requarks/wiki|现代Wiki|gh|📘|Wiki,现代
+docusaurus|github.com/facebook/docusaurus|文档网站生成|gh|🦖|文档,生成
+vitepress|github.com/vuejs/vitepress|Vite文档生成|gh|⚡|文档,Vite
+mkdocs|github.com/mkdocs/mkdocs|Markdown文档|gh|📘|文档,Markdown
+httpie|github.com/httpie/httpie|命令行HTTP客户端|gh|🌐|HTTP,命令行
+curl|github.com/curl/curl|命令行传输工具|gh|🌊|传输,命令行
+wget|github.com/mirror/wget|命令行下载|gh|📥|下载,命令行
+aria2|github.com/aria2/aria2|多协议下载|gh|⚡|下载,多协议
+yt-dlp|github.com/yt-dlp/yt-dlp|视频下载神器|gh|📥|下载,视频
+you-get|github.com/soimort/you-get|视频下载工具|gh|📺|下载,视频
+gallery-dl|github.com/mikf/gallery-dl|图库下载|gh|🖼️|下载,图库
+rclone|github.com/rclone/rclone|云存储同步|gh|🔄|同步,云盘
+restic|github.com/restic/restic|快速备份|gh|💾|备份,加密
+syncthing|github.com/syncthing/syncthing|开源文件同步|gh|🔄|同步,开源
+snapdrop|github.com/RobinLinus/snapdrop|浏览器文件传输|gh|📤|传输,浏览器
+croc|github.com/schollz/croc|简单安全传输|gh|🐊|传输,加密
+bitwarden|github.com/bitwarden/clients|密码管理|gh|🔐|密码,管理
+vaultwarden|github.com/dani-garcia/vaultwarden|Bitwarden自托管|gh|🏰|密码,自托管
+keepassxc|github.com/keepassxreboot/keepassxc|开源密码库|gh|🗝️|密码,开源
+tailscale|github.com/tailscale/tailscale|零配置VPN|gh|🔗|VPN,组网
+headscale|github.com/juanfont/headscale|Tailscale自托管|gh|🎩|VPN,自托管
+zerotier|github.com/zerotier/ZeroTierOne|虚拟组网|gh|🌐|组网,虚拟
+pi-hole|github.com/pi-hole/pi-hole|网络广告拦截|gh|🕳️|广告,拦截
+adguardhome|github.com/AdguardTeam/AdGuardHome|DNS广告拦截|gh|🛡️|DNS,广告
+frp|github.com/fatedier/frp|内网穿透|gh|🔗|内网,穿透
+nmap|github.com/nmap/nmap|网络扫描|gh|🔍|网络,扫描
+ffuf|github.com/ffuf/ffuf|快速模糊测试|gh|🌫️|测试,模糊
+nuclei|github.com/projectdiscovery/nuclei|漏洞扫描|gh|☢️|漏洞,扫描
+TinyWow|tinywow.com|免费在线工具集|tool|✨|工具,免费
+123Apps|123apps.com|免费在线工具|tool|1️⃣|工具,免费
+Convertio|convertio.co|在线文件转换|tool|🔄|转换,文件
+CloudConvert|cloudconvert.com|云端文件转换|tool|☁️|转换,云端
+Zamzar|zamzar.com|在线文件转换|tool|🦓|转换,文件
+FreeConvert|freeconvert.com|免费文件转换|tool|🆓|转换,免费
+Soda PDF|sodapdf.com|PDF编辑工具|tool|🥤|PDF,编辑
+Foxit|foxit.com|PDF阅读编辑|tool|🦊|PDF,阅读
+Xodo|xodo.com|在线PDF协作|tool|📝|PDF,协作
+DocHub|dochub.com|PDF签名编辑|tool|✍️|PDF,签名
+SignNow|signnow.com|电子签名|tool|🖊️|签名,电子
+DocuSign|docusign.com|电子签名平台|tool|✒️|签名,平台
+WeTransfer|wetransfer.com|大文件传输|tool|📤|传输,文件
+Send Anywhere|send-anywhere.com|跨设备文件传输|tool|📲|传输,跨设备
+Filemail|filemail.com|大文件发送|tool|📧|传输,邮件
+Smash|fromsmash.com|无限大文件传输|tool|💥|传输,大文件
+Swisstransfer|swisstransfer.com|瑞士文件传输|tool|🇨🇭|传输,瑞士
+MediaFire|mediafire.com|免费云存储|tool|🔥|云盘,免费
+Tresorit|tresorit.com|瑞士加密云盘|tool|🔒|云盘,瑞士
+Icedrive|icedrive.net|现代云存储|tool|❄️|云盘,现代
+IPFS|ipfs.tech|星际文件系统|tool|🌌|去中心化,存储
+Arweave|arweave.org|永久存储网络|tool|♾️|存储,永久
+Bitwarden|bitwarden.com|开源密码管理|sec|🔐|密码,开源
+1Password|1password.com|团队密码管理|sec|🔑|密码,团队
+LastPass|lastpass.com|云端密码管理|sec|🔒|密码,云端
+KeePass|keepass.info|开源本地密码库|sec|🗝️|密码,本地
+DuckDuckGo|duckduckgo.com|隐私搜索引擎|sec|🦆|搜索,隐私
+Startpage|startpage.com|隐私搜索|sec|🔍|搜索,隐私
+Brave Search|search.brave.com|独立搜索索引|sec|🦁|搜索,独立
+Tor Project|torproject.org|匿名网络|sec|🧅|匿名,网络
+Brave|brave.com|隐私浏览器|sec|🦁|浏览器,隐私
+Firefox|mozilla.org/firefox|开源浏览器|sec|🦊|浏览器,开源
+Mullvad VPN|mullvad.net|隐私VPN|sec|🧅|VPN,隐私
+Proton VPN|protonvpn.com|瑞士VPN|sec|🛡️|VPN,瑞士
+WireGuard|wireguard.com|现代VPN协议|sec|🐍|VPN,协议
+AdGuard|adguard.com|广告拦截工具|sec|🛡️|广告,拦截
+uBlock Origin|github.com/gorhill/uBlock|开源广告拦截|sec|🛑|广告,开源
+VirusTotal|virustotal.com|在线病毒扫描|sec|🦠|病毒,扫描
+URLScan|urlscan.io|网址安全扫描|sec|🔍|URL,安全
+Have I Been Pwned|haveibeenpwned.com|数据泄露查询|sec|🔓|泄露,查询
+Shodan|shodan.io|物联网搜索引擎|sec|📡|物联网,搜索
+Censys|censys.io|互联网资产搜索|sec|🔎|资产,搜索
+ZoomEye|zoomeye.org|网络空间搜索|sec|👁️|网络,搜索
+FOFA|fofa.info|网络空间测绘|sec|🗺️|网络,测绘
+Steam|store.steampowered.com|全球最大游戏平台|game|🎮|游戏,平台
+Epic Games|store.epicgames.com|Epic游戏商城|game|🕹️|游戏,商城
+GOG|gog.com|无DRM游戏平台|game|🌌|游戏,无DRM
+Itch.io|itch.io|独立游戏平台|game|🎨|独立游戏,平台
+Humble Bundle|humblebundle.com|游戏慈善包|game|🎁|游戏,慈善
+Xbox|xbox.com|微软游戏平台|game|🟢|游戏,微软
+PlayStation|playstation.com|索尼游戏平台|game|🎮|游戏,索尼
+Nintendo|nintendo.com|任天堂官网|game|🍄|游戏,任天堂
+NGA|nga.cn|游戏玩家社区|game|🐘|游戏,社区
+机核|gcores.com|游戏文化社区|game|🎧|游戏,文化
+IGN|ign.com|全球游戏媒体|game|📰|游戏,媒体
+GameSpot|gamespot.com|游戏评测媒体|game|🎯|游戏,评测
+Polygon|polygon.com|游戏文化媒体|game|🔺|游戏,文化
+PC Gamer|pcgamer.com|PC游戏媒体|game|💻|游戏,PC
+OpenCritic|opencritic.com|游戏评分聚合|game|🎯|游戏,评分
+HowLongToBeat|howlongtobeat.com|游戏通关时长|game|⏱️|游戏,时长
+PCGamingWiki|pcgamingwiki.com|PC游戏问题解决|game|🔧|游戏,维基
+ProtonDB|protondb.com|Linux游戏兼容性|game|🐧|Linux,兼容
+SteamDB|steamdb.info|Steam数据统计|game|📊|Steam,数据
+Nexus Mods|nexusmods.com|游戏模组社区|game|🔧|模组,社区
+ModDB|moddb.com|游戏模组数据库|game|🗃️|模组,数据库
+CurseForge|curseforge.com|游戏模组平台|game|🔥|模组,平台
+Game Jolt|gamejolt.com|独立游戏社区|game|🎮|独立游戏,社区
+Newgrounds|newgrounds.com|Flash游戏社区|game|🆕|Flash,社区
+Kongregate|kongregate.com|网页游戏平台|game|🎯|网页游戏,平台
+Poki|poki.com|免费在线游戏|game|🎮|在线,免费
+CrazyGames|crazygames.com|免费网页游戏|game|🤪|在线,免费
+Roblox|roblox.com|用户创作游戏平台|game|🟥|游戏,创作
+Minecraft|minecraft.net|沙盒建造游戏|game|⛏️|沙盒,建造
+League of Legends|leagueoflegends.com|英雄联盟|game|⚔️|MOBA,游戏
+Dota 2|dota2.com|Dota 2官网|game|🛡️|MOBA,游戏
+CS2|counter-strike.net|反恐精英2|game|🔫|FPS,游戏
+Valorant|playvalorant.com|无畏契约|game|🎯|FPS,游戏
+Genshin Impact|genshin.hoyoverse.com|原神|game|⚗️|开放世界,米哈游
+Honkai Star Rail|hsr.hoyoverse.com|崩坏星穹铁道|game|🚂|回合制,米哈游
+明日方舟|ak.hypergryph.com|明日方舟|game|🦅|塔防,鹰角
+支付宝|alipay.com|国内移动支付|life|💰|支付,国内
+PayPal|paypal.com|全球在线支付|life|💸|支付,国际
+Stripe|stripe.com|开发者支付平台|life|💳|支付,开发者
+淘宝|taobao.com|国内电商平台|life|🛍️|购物,国内
+京东|jd.com|自营电商平台|life|🐶|购物,自营
+拼多多|pinduoduo.com|社交电商平台|life|🍎|购物,社交
+亚马逊|amazon.com|全球电商巨头|life|📦|购物,国际
+eBay|ebay.com|全球拍卖购物|life|🏷️|购物,拍卖
+闲鱼|xianyu.com|二手交易平台|life|🐟|二手,交易
+得物|dewu.com|潮流购物平台|life|👟|潮流,购物
+大众点评|dianping.com|本地生活服务|life|⭐|生活,点评
+美团|meituan.com|本地生活平台|life|🍔|生活,外卖
+饿了么|ele.me|外卖平台|life|🛵|外卖,国内
+滴滴出行|didiglobal.com|网约车平台|life|🚗|出行,打车
+高德地图|amap.com|国内地图导航|life|🗺️|地图,导航
+Google Maps|maps.google.com|全球地图服务|life|🗺️|地图,Google
+携程|ctrip.com|在线旅行服务|life|✈️|旅行,酒店
+去哪儿|qunar.com|旅行搜索平台|life|🎒|旅行,搜索
+Airbnb|airbnb.com|全球民宿预订|life|🏠|民宿,全球
+Booking|booking.com|全球酒店预订|life|🏨|酒店,全球
+Agoda|agoda.com|亚洲酒店预订|life|🌏|酒店,亚洲
+TripAdvisor|tripadvisor.com|旅行点评社区|life|🦉|旅行,点评
+马蜂窝|mafengwo.cn|旅行攻略社区|life|🐝|旅行,攻略
+12306|12306.cn|中国铁路购票|life|🚄|火车,购票
+航旅纵横|umetrip.com|航班信息服务|life|✈️|航班,信息
+飞常准|variflight.com|航班动态查询|life|🛫|航班,查询
+顺丰速运|sf-express.com|顺丰快递|life|📦|快递,顺丰
+菜鸟|cainiao.com|阿里物流平台|life|🐦|物流,阿里
+DHL|dhl.com|国际快递|life|📮|快递,国际
+FedEx|fedex.com|联邦快递|life|📦|快递,国际
+微信|weixin.qq.com|国民级通讯软件|social|💬|通讯,国内
+QQ|im.qq.com|腾讯即时通讯|social|🐧|通讯,腾讯
+钉钉|dingtalk.com|阿里企业通讯|social|📌|办公,阿里
+飞书|feishu.cn|字节协作平台|social|🚀|协作,字节
+企业微信|work.weixin.qq.com|企业通讯工具|social|🏢|企业,微信
+Slack|slack.com|团队协作平台|social|💬|协作,国际
+Discord|discord.com|社群语音平台|social|🎮|社群,语音
+Telegram|telegram.org|加密即时通讯|social|✈️|通讯,加密
+WhatsApp|whatsapp.com|全球即时通讯|social|📱|通讯,国际
+Signal|signal.org|端到端加密通讯|social|🔒|加密,通讯
+Zoom|zoom.us|视频会议平台|social|📹|会议,视频
+Google Meet|meet.google.com|谷歌视频会议|social|📞|会议,Google
+Microsoft Teams|teams.microsoft.com|微软协作平台|social|👥|协作,微软
+腾讯会议|meeting.tencent.com|腾讯视频会议|social|🎥|会议,腾讯
+Jitsi|jitsi.org|开源视频会议|social|🔓|会议,开源
+Gather|gather.town|虚拟空间聚会|social|🏘️|虚拟,聚会
+VRChat|vrchat.com|VR社交平台|social|🥽|VR,社交
+Quora|quora.com|知识问答社区|social|❓|问答,社区
+知乎|zhihu.com|中文问答社区|social|🔵|问答,国内
+贴吧|tieba.baidu.com|百度兴趣社区|social|🐾|社区,百度
+微博|weibo.com|中文微博平台|social|📢|微博,国内
+Hacker News|news.ycombinator.com|技术创业社区|social|🔶|社区,技术
+Product Hunt|producthunt.com|新产品发现社区|social|🐱|产品,社区
+Indie Hackers|indiehackers.com|独立开发者社区|social|🚀|独立,创业
+Dev.to|dev.to|开发者写作社区|social|👩‍💻|开发,社区
+Hashnode|hashnode.com|开发者博客社区|social|📝|博客,开发
+Medium|medium.com|优质写作平台|social|✍️|写作,平台
+Substack|substack.com|付费订阅写作|social|📰|订阅,写作
+Tumblr|tumblr.com|轻博客社区|social|🎨|博客,社区
+微信读书|weread.qq.com|社交阅读平台|book|📚|阅读,社交
+掌阅|zhangyue.com|数字阅读平台|book|📱|阅读,国内
+Kindle|read.amazon.com|亚马逊电子书|book|📕|阅读,亚马逊
+Apple Books|apple.com/apple-books|苹果图书|book|📘|阅读,苹果
+Google Play Books|play.google.com/books|谷歌图书|book|📗|阅读,谷歌
+Kobo|kobo.com|乐天电子书|book|📙|阅读,乐天
+Scribd|scribd.com|电子书订阅|book|📚|订阅,阅读
+Audible|audible.com|有声书平台|book|🎧|有声书,亚马逊
+Libby|libbyapp.com|图书馆电子书借阅|book|📚|借阅,图书馆
+Wattpad|wattpad.com|全球写作社区|book|✍️|写作,社区
+Archive of Our Own|archiveofourown.org|同人创作存档|book|📝|同人,创作
+Royal Road|royalroad.com|网络小说平台|book|⚔️|小说,网络
+起点中文网|qidian.com|国内网文平台|book|📕|网文,国内
+晋江文学城|jjwxc.net|女性向文学|book|🌸|文学,国内
+番茄小说|fanqienovel.com|免费小说平台|book|🍅|小说,免费
+刺猬猫|ciweimao.com|二次元小说|book|🦔|小说,二次元
+SF轻小说|sfacg.com|轻小说平台|book|✨|轻小说,国内
+轻之国度|lightnovel.us|轻小说翻译|book|🌸|轻小说,翻译
+Poetry Foundation|poetryfoundation.org|诗歌基金会|book|📜|诗歌,英文
+WikiSource|wikisource.org|自由文本图书馆|book|📚|文库,维基
+Loyal Books|loyalbooks.com|免费有声书|book|🎧|有声书,免费
+Storynory|storynory.com|儿童故事音频|book|🧒|儿童,故事
+`;
+
+const DATA = RAW_TEXT.trim().split('\n').map((line, i) => {
+  const p = line.split('|');
+  if (p.length < 5) return null;
+  let url = p[1].trim();
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  return {
+    id: i, n: p[0].trim(), u: url, d: (p[2] || '').trim(),
+    c: (p[3] || 'tool').trim(), i: (p[4] || '🔗').trim(),
+    t: (p[5] || '').split(',').map(s => s.trim()).filter(Boolean)
+  };
+}).filter(Boolean);
+
+const CAT_MAP = {};
+CATS.forEach(c => CAT_MAP[c.id] = c);
+const COUNT = {};
+DATA.forEach(d => COUNT[d.c] = (COUNT[d.c] || 0) + 1);
+
+/* =========================================================
+   状态
+   ========================================================= */
+const state = { view:'home', tab:'search', query:'', cat:'all', favOnly:false };
+const FAV_KEY = 'wnebts_favs_v8';
+let favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch (e) { favs = new Set(); }
+function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch (e) {} }
+
+const $qHome = document.getElementById('qHome');
+const $qResults = document.getElementById('qResults');
+const $goHome = document.getElementById('goHome');
+const $goResults = document.getElementById('goResults');
+const $resultsView = document.getElementById('resultsView');
+const $resultStats = document.getElementById('resultStats');
+const $resultList = document.getElementById('resultList');
+const $cats = document.getElementById('cats');
+const $grid = document.getElementById('grid');
+const $treasureGrid = document.getElementById('treasureGrid');
+const $settingsPanel = document.getElementById('settingsPanel');
+const $settingsOverlay = document.getElementById('settingsOverlay');
+const $settingsClose = document.getElementById('settingsClose');
+const $settingsDone = document.getElementById('settingsDone');
+const $settingsReset = document.getElementById('settingsReset');
+const $sourceList = document.getElementById('sourceList');
+const $quickActions = document.getElementById('quickActions');
+const $settingsBtn = document.getElementById('settingsBtn');
+const $navBtn = document.getElementById('navBtn');
+const $refreshTreasures = document.getElementById('refreshTreasures');
+
+/* =========================================================
+   工具
+   ========================================================= */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+function hl(text, q) {
+  const t = String(text || '');
+  if (!q) return esc(t);
+  const i = t.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(t);
+  return esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + q.length)) + '</mark>' + esc(t.slice(i + q.length));
+}
+function getHost(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } }
+function faviconFor(url) {
+  try { return 'https://www.google.com/s2/favicons?domain=' + new URL(url).hostname + '&sz=32'; }
+  catch { return ''; }
+}
+function stripHtml(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); }
+function fmtNum(n) {
+  n = Number(n) || 0;
+  if (n >= 1e8) return (n / 1e8).toFixed(1) + '亿';
+  if (n >= 1e4) return (n / 1e4).toFixed(1) + '万';
+  return String(n);
+}
+function fetchWithTimeout(url, ms, opts) {
+  return new Promise((resolve, reject) => {
+    const c = new AbortController();
+    const t = setTimeout(() => { c.abort(); reject(new Error('timeout')); }, ms);
+    fetch(url, Object.assign({ signal: c.signal }, opts || {}))
+      .then(r => { clearTimeout(t); resolve(r); })
+      .catch(e => { clearTimeout(t); reject(e); });
+  });
+}
+
+/* =========================================================
+   数据源定义
+   类型：local(本地库)、api(可直连)、external(需跳转)
+   ========================================================= */
+const SOURCE_DEFS = [
+  {id:'local',  name:'Wnebts 本地',     icon:'🎁', desc:'精选宝藏站点库',           type:'local',    on:true},
+  {id:'github', name:'GitHub',          icon:'🐙', desc:'开源仓库搜索（实时）',     type:'api',      on:true},
+  {id:'bili',   name:'哔哩哔哩',         icon:'📺', desc:'视频内容搜索（实时）',     type:'api',      on:true},
+  {id:'so',     name:'Stack Overflow',  icon:'📚', desc:'技术问答（实时）',        type:'api',      on:true},
+  {id:'hn',     name:'Hacker News',     icon:'🔶', desc:'技术资讯（实时）',        type:'api',      on:true},
+  {id:'itunes', name:'iTunes',          icon:'🎵', desc:'App/音乐/播客（实时）',   type:'api',      on:true},
+  {id:'book',   name:'Open Library',    icon:'📖', desc:'图书搜索（实时）',        type:'api',      on:true},
+  {id:'bing',   name:'Bing',            icon:'🅱️', desc:'微软搜索（跳转）',        type:'external', url:'https://cn.bing.com/search?q=', on:true},
+  {id:'baidu',  name:'百度',            icon:'🐾', desc:'中文搜索（跳转）',        type:'external', url:'https://www.baidu.com/s?wd=',   on:true},
+  {id:'google', name:'Google',          icon:'🔍', desc:'谷歌搜索（跳转）',        type:'external', url:'https://www.google.com/search?q=', on:true},
+  {id:'sogou',  name:'搜狗',            icon:'🐶', desc:'搜狗搜索（跳转）',        type:'external', url:'https://www.sogou.com/web?query=', on:false},
+  {id:'so360',  name:'360搜索',          icon:'🛡️', desc:'360搜索（跳转）',         type:'external', url:'https://www.so.com/s?q=',      on:false}
+];
+
+const TYPE_LABEL = { local:'本地库', api:'实时 API', external:'跳转' };
+
+function renderSourceList() {
+  $sourceList.innerHTML = SOURCE_DEFS.map(s => `
+    <div class="src-item ${s.on ? 'on' : ''}" data-src="${s.id}">
+      <div class="src-ic">${s.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="src-name">${s.name}</div>
+        <div class="src-desc">${s.desc}</div>
+      </div>
+      <span class="type-tag">${TYPE_LABEL[s.type] || ''}</span>
+      <div class="toggle"></div>
+    </div>
+  `).join('');
+}
+
+$sourceList.addEventListener('click', e => {
+  const item = e.target.closest('.src-item');
+  if (!item) return;
+  const s = SOURCE_DEFS.find(x => x.id === item.dataset.src);
+  if (!s) return;
+  s.on = !s.on;
+  item.classList.toggle('on', s.on);
+  saveSourcePrefs();
+});
+
+const SRC_KEY = 'wnebts_srcs_v1';
+function saveSourcePrefs() {
+  try {
+    const prefs = {};
+    SOURCE_DEFS.forEach(s => prefs[s.id] = s.on);
+    localStorage.setItem(SRC_KEY, JSON.stringify(prefs));
+  } catch (e) {}
+}
+function loadSourcePrefs() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem(SRC_KEY) || '{}');
+    SOURCE_DEFS.forEach(s => {
+      if (typeof prefs[s.id] === 'boolean') s.on = prefs[s.id];
+    });
+  } catch (e) {}
+}
+
+function renderQuickActions() {
+  $quickActions.innerHTML = `
+    <div class="src-item" data-action="open-directory">
+      <div class="src-ic">🎁</div>
+      <div style="flex:1"><div class="src-name">宝藏导航</div><div class="src-desc">浏览本地精选站点</div></div>
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </div>
+    <div class="src-item" data-action="clear-favs">
+      <div class="src-ic">🗑️</div>
+      <div style="flex:1"><div class="src-name">清空收藏</div><div class="src-desc">删除所有本地收藏记录</div></div>
+    </div>
+  `;
+}
+
+$quickActions.addEventListener('click', e => {
+  const item = e.target.closest('.src-item');
+  if (!item) return;
+  const action = item.dataset.action;
+  if (action === 'open-directory') { closeSettings(); switchTab('directory'); }
+  else if (action === 'clear-favs') {
+    if (confirm('确定要清空所有收藏吗？')) { favs.clear(); saveFavs(); renderDirectory(); }
+  }
+});
+
+/* =========================================================
+   设置面板
+   ========================================================= */
+function openSettings() {
+  $settingsPanel.classList.add('show');
+  $settingsOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSettings() {
+  $settingsPanel.classList.remove('show');
+  $settingsOverlay.classList.remove('show');
+  document.body.style.overflow = '';
+}
+$settingsBtn.addEventListener('click', openSettings);
+$settingsClose.addEventListener('click', closeSettings);
+$settingsDone.addEventListener('click', closeSettings);
+$settingsOverlay.addEventListener('click', closeSettings);
+$settingsReset.addEventListener('click', () => {
+  SOURCE_DEFS.forEach(s => s.on = true);
+  renderSourceList();
+  saveSourcePrefs();
+});
+
+/* =========================================================
+   宝藏推荐（实时从互联网获取）
+   ========================================================= */
+async function fetchGitHubTreasures() {
+  const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const url = `https://api.github.com/search/repositories?q=created:>${since}+stars:>15&sort=stars&order=desc&per_page=8`;
+  try {
+    const res = await fetchWithTimeout(url, 8000, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map(item => ({
+      type: 'github', icon: '🐙', source: 'GitHub · 近7天新项目',
+      title: item.full_name, url: item.html_url,
+      desc: item.description || '(暂无描述)',
+      stars: item.stargazers_count, lang: item.language
+    }));
+  } catch (e) { return []; }
+}
+
+async function fetchHNTreasures() {
+  const url = 'https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=8';
+  try {
+    const res = await fetchWithTimeout(url, 8000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.hits || []).filter(h => h.title).map(item => ({
+      type: 'hn', icon: '🔶', source: 'Hacker News · 首页热门',
+      title: item.title,
+      url: item.url || `https://news.ycombinator.com/item?id=${item.objectID}`,
+      desc: item.story_text ? stripHtml(item.story_text).slice(0, 160) : '技术社区正在讨论的话题',
+      points: item.points || 0, comments: item.num_comments || 0
+    }));
+  } catch (e) { return []; }
+}
+
+async function fetchRedditTreasures() {
+  const url = 'https://www.reddit.com/r/programming/hot.json?limit=6';
+  try {
+    const res = await fetchWithTimeout(url, 8000, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.data && data.data.children || [])
+      .map(c => c.data).filter(d => d && !d.stickied).slice(0, 6).map(item => ({
+        type: 'reddit', icon: '💬', source: 'Reddit · r/programming',
+        title: item.title, url: 'https://www.reddit.com' + item.permalink,
+        desc: (item.selftext || '').slice(0, 160) || '开发者社区热门讨论',
+        points: item.ups || 0, comments: item.num_comments || 0
+      }));
+  } catch (e) { return []; }
+}
+
+let treasureLoading = false;
+async function loadTreasures() {
+  if (treasureLoading) return;
+  treasureLoading = true;
+  $refreshTreasures.classList.add('spinning');
+  $treasureGrid.innerHTML = `<div class="treasure-loading"><div class="spinner"></div><div>正在从互联网抓取新鲜内容…</div></div>`;
+  try {
+    const [gh, hn, rd] = await Promise.allSettled([
+      fetchGitHubTreasures(), fetchHNTreasures(), fetchRedditTreasures()
+    ]);
+    const items = [];
+    if (gh.status === 'fulfilled') items.push(...gh.value);
+    if (hn.status === 'fulfilled') items.push(...hn.value);
+    if (rd.status === 'fulfilled') items.push(...rd.value);
+    if (!items.length) {
+      $treasureGrid.innerHTML = `<div class="treasure-loading"><div>暂时无法获取互联网内容</div><div style="font-size:11.5px;margin-top:6px;opacity:.7">可能是网络问题，稍后重试</div></div>`;
+      return;
+    }
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    const show = items.slice(0, 12);
+    $treasureGrid.innerHTML = show.map((it, idx) => {
+      const delay = Math.min(idx, 12) * 30;
+      let meta = '';
+      if (it.type === 'github') meta = `<span class="star">★ ${fmtNum(it.stars)}</span>${it.lang ? `<span class="lang">● ${esc(it.lang)}</span>` : ''}`;
+      else if (it.type === 'hn' || it.type === 'reddit') meta = `<span>▲ ${it.points}</span><span>💬 ${it.comments}</span>`;
+      return `<a class="treasure" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer" style="animation-delay:${delay}ms">
+        <div class="t-top"><div class="t-icon">${it.icon}</div><div class="t-source">${esc(it.source)}</div></div>
+        <div class="t-title">${esc(it.title)}</div>
+        ${it.desc ? `<div class="t-desc">${esc(it.desc)}</div>` : ''}
+        <div class="t-meta">${meta}</div>
+      </a>`;
+    }).join('');
+  } finally {
+    treasureLoading = false;
+    setTimeout(() => $refreshTreasures.classList.remove('spinning'), 400);
+  }
+}
+$refreshTreasures.addEventListener('click', loadTreasures);
+
+/* =========================================================
+   各数据源搜索函数（只有类型为 api 的在这里）
+   ========================================================= */
+async function searchGitHub(q) {
+  try {
+    const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=20`;
+    const res = await fetchWithTimeout(url, 7000, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map(item => ({
+      title: item.full_name, url: item.html_url,
+      snippet: item.description || '(没有描述)',
+      stars: item.stargazers_count, forks: item.forks_count,
+      lang: item.language, updated: (item.updated_at || '').slice(0, 10)
+    }));
+  } catch (e) { return []; }
+}
+
+async function searchBilibili(q) {
+  try {
+    const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(q)}&page=1`;
+    const res = await fetchWithTimeout(url, 7000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data && data.data && data.data.result) || []).slice(0, 20).map(item => ({
+      title: stripHtml(item.title || ''),
+      url: item.arcurl || `https://www.bilibili.com/video/${item.bvid || ''}`,
+      snippet: stripHtml(item.description || ''),
+      author: item.author, play: item.play, duration: item.duration
+    })).filter(x => x.title && x.url);
+  } catch (e) { return []; }
+}
+
+async function searchSO(q) {
+  try {
+    const url = `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(q)}&site=stackoverflow&pagesize=20&filter=withbody`;
+    const res = await fetchWithTimeout(url, 7000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map(item => ({
+      title: item.title, url: item.link,
+      snippet: stripHtml(item.body || '').slice(0, 220),
+      score: item.score, answers: item.answer_count, isAnswered: !!item.is_answered
+    }));
+  } catch (e) { return []; }
+}
+
+async function searchHN(q) {
+  try {
+    const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&hitsPerPage=20&tags=story`;
+    const res = await fetchWithTimeout(url, 7000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.hits || []).filter(h => h.title || h.story_title).map(item => ({
+      title: item.title || item.story_title || '(无标题)',
+      url: item.url || `https://news.ycombinator.com/item?id=${item.objectID}`,
+      snippet: stripHtml(item.story_text || item.comment_text || '').slice(0, 200),
+      points: item.points || 0, comments: item.num_comments || 0
+    }));
+  } catch (e) { return []; }
+}
+
+async function searchITunes(q) {
+  try {
+    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&limit=20&country=cn`;
+    const res = await fetchWithTimeout(url, 7000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map(item => {
+      const url = item.trackViewUrl || item.collectionViewUrl || item.artistViewUrl || '';
+      if (!url) return null;
+      let type = '内容';
+      if (item.wrapperType === 'track' && item.kind) {
+        const k = item.kind;
+        if (k === 'song') type = '音乐'; else if (k === 'feature-movie') type = '电影';
+        else if (k === 'podcast') type = '播客'; else if (k === 'ebook') type = '电子书';
+        else if (k === 'software') type = 'App'; else type = k;
+      } else if (item.wrapperType === 'collection') type = '合集';
+      else if (item.wrapperType === 'audiobook') type = '有声书';
+      return {
+        title: item.trackName || item.collectionName || item.artistName, url,
+        snippet: [item.artistName, item.primaryGenreName].filter(Boolean).join(' · ') +
+                 (item.releaseDate ? ' · ' + item.releaseDate.slice(0, 4) : ''),
+        art: item.artworkUrl100 || item.artworkUrl60 || '', type
+      };
+    }).filter(Boolean);
+  } catch (e) { return []; }
+}
+
+async function searchOL(q) {
+  try {
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`;
+    const res = await fetchWithTimeout(url, 7000);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.docs || []).map(item => ({
+      title: item.title, url: 'https://openlibrary.org' + item.key,
+      snippet: [(item.author_name || []).slice(0, 2).join(', '),
+        item.first_publish_year ? '首次出版 ' + item.first_publish_year : ''
+      ].filter(Boolean).join(' · '),
+      cover: item.cover_i ? `https://covers.openlibrary.org/b/id/${item.cover_i}-M.jpg` : ''
+    }));
+  } catch (e) { return []; }
+}
+
+function searchLocal(q) {
+  const query = q.toLowerCase().trim();
+  if (!query) return [];
+  const words = query.split(/\s+/).filter(Boolean);
+  const scored = [];
+  DATA.forEach(d => {
+    const hay = (d.n + ' ' + d.d + ' ' + d.t.join(' ') + ' ' + d.u).toLowerCase();
+    let score = 0;
+    if (d.n.toLowerCase() === query) score += 30;
+    else if (d.n.toLowerCase().includes(query)) score += 15;
+    if (hay.includes(query)) score += 8;
+    words.forEach(w => { if (hay.includes(w)) score += 2; });
+    if (score > 0) scored.push({ d, score });
+  });
+  return scored.sort((a, b) => b.score - a.score).slice(0, 10).map(x => x.d);
+}
+
+const API_FNS = {
+  github: searchGitHub,
+  bili: searchBilibili,
+  so: searchSO,
+  hn: searchHN,
+  itunes: searchITunes,
+  book: searchOL
+};
+
+/* =========================================================
+   搜索执行
+   ========================================================= */
+let searchToken = 0;
+
+async function doSearch(query) {
+  query = (query || '').trim();
+  if (!query) return;
+
+  state.query = query;
+  state.view = 'results';
+  document.body.dataset.view = 'results';
+  $qResults.value = query;
+  $resultsView.classList.add('show');
+
+  // 更新 URL（方便作为搜索引擎使用）
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set('q', query);
+    history.replaceState(null, '', url.toString());
+  } catch (e) {}
+
+  const token = ++searchToken;
+  const active = SOURCE_DEFS.filter(s => s.on);
+
+  const apiSources = active.filter(s => s.type === 'api' || s.type === 'local');
+  const extSources = active.filter(s => s.type === 'external');
+
+  if (!active.length) {
+    $resultStats.innerHTML = `<div class="chips"><span class="chip">未启用任何数据源</span></div>`;
+    $resultList.innerHTML = `<div class="empty">
+      <div class="big">⚙️</div>
+      <h3>请先在设置中启用至少一个数据源</h3>
+      <p>点击右上角齿轮图标打开设置</p>
+    </div>`;
+    return;
+  }
+
+  // 骨架
+  $resultList.innerHTML = 
+    (extSources.length ? `<div class="external-cards" id="extCards"></div>` : '') +
+    apiSources.map(s => `
+      <div class="src-section" data-src="${s.id}">
+        <div class="group-label"><span class="ic">${s.icon}</span><span>${s.name}</span></div>
+        <div class="inline-loading"><span class="dotpulse"></span><span>加载中…</span></div>
+      </div>
+    `).join('') + '<div id="moreWrap"></div>';
+
+  // 渲染外部跳转卡片
+  if (extSources.length) {
+    const cards = document.getElementById('extCards');
+    cards.innerHTML = extSources.map(s => `
+      <a class="ext-card" href="${s.url}${encodeURIComponent(query)}" target="_blank" rel="noopener noreferrer">
+        <div class="e-icon">${s.icon}</div>
+        <div class="e-body">
+          <div class="e-name">在 ${esc(s.name)} 中搜索</div>
+          <div class="e-hint">点击跳转</div>
+        </div>
+        <span class="e-arrow">↗</span>
+      </a>
+    `).join('');
+  }
+
+  const rendered = {};
+
+  function updateStats() {
+    const groups = apiSources.filter(s => rendered[s.id] && rendered[s.id].length);
+    const total = groups.reduce((n, s) => n + rendered[s.id].length, 0);
+    if (total === 0) {
+      $resultStats.innerHTML = `<div class="chips"><span class="chip">搜索中…</span></div>`;
+    } else {
+      $resultStats.innerHTML = `
+        <div>站内找到 <b>${total}</b> 条结果 · 来自 <b>${groups.length}</b> 个来源 · ${extSources.length ? `另有 <b>${extSources.length}</b> 个外部引擎` : ''}</div>
+        <div class="chips">${groups.map(s => `<span class="chip">${s.icon} ${s.name} · ${rendered[s.id].length}</span>`).join('')}</div>
+      `;
+    }
+  }
+
+  function fillSection(srcId) {
+    const el = $resultList.querySelector(`[data-src="${srcId}"]`);
+    if (!el) return;
+    const src = apiSources.find(s => s.id === srcId);
+    const results = rendered[srcId];
+    if (!results || !results.length) { el.remove(); return; }
+    el.innerHTML = renderGroup({ src, results }, query);
+    el.classList.add('on');
+  }
+
+  // 本地
+  try {
+    const localResults = searchLocal(query);
+    if (localResults.length) {
+      rendered.local = localResults;
+      fillSection('local');
+      updateStats();
+    } else {
+      const el = $resultList.querySelector('[data-src="local"]');
+      if (el) el.remove();
+    }
+  } catch (e) {
+    const el = $resultList.querySelector('[data-src="local"]');
+    if (el) el.remove();
+  }
+
+  // API
+  const jobs = apiSources.filter(s => s.id !== 'local').map(async s => {
+    const fn = API_FNS[s.id];
+    if (!fn) { const el = $resultList.querySelector(`[data-src="${s.id}"]`); if (el) el.remove(); return; }
+    try {
+      const results = await fn(query);
+      if (token !== searchToken) return;
+      if (results && results.length) {
+        rendered[s.id] = results;
+        fillSection(s.id);
+        updateStats();
+      } else {
+        const el = $resultList.querySelector(`[data-src="${s.id}"]`);
+        if (el) el.remove();
+      }
+    } catch (e) {
+      const el = $resultList.querySelector(`[data-src="${s.id}"]`);
+      if (el) el.remove();
+    }
+  });
+
+  await Promise.all(jobs);
+  if (token !== searchToken) return;
+
+  if (!Object.keys(rendered).length) {
+    if (!extSources.length) {
+      $resultList.innerHTML = `<div class="empty">
+        <div class="big">🔍</div>
+        <h3>没有找到关于「${esc(query)}」的结果</h3>
+        <p>换个关键词，或在设置中启用外部搜索引擎</p>
+      </div>`;
+    }
+    $resultStats.innerHTML = `<div class="chips"><span class="chip">站内 0 条</span></div>`;
+    return;
+  }
+
+  const moreWrap = document.getElementById('moreWrap');
+  if (moreWrap) moreWrap.innerHTML = renderMorePlatforms(query);
+}
+
+function renderGroup({ src, results }, query) {
+  let html = `<div class="group-label"><span class="ic">${src.icon}</span><span>${src.name}</span></div>`;
+
+  if (src.id === 'local') {
+    results.forEach(d => {
+      html += `<a class="g-local" href="${esc(d.u)}" target="_blank" rel="noopener noreferrer">
+        <div class="gl-ico">${d.i}</div>
+        <div class="gl-body">
+          <div class="gl-title">${hl(d.n, query)} <span class="badge">宝藏</span></div>
+          <div class="gl-desc">${hl(d.d, query)}</div>
+          <div class="gl-tags">${d.t.slice(0, 3).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+        </div>
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'bili') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav"><img src="https://www.bilibili.com/favicon.ico" alt="" onerror="this.style.display='none'"></span>
+          <span class="g-site">bilibili.com</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        ${r.snippet ? `<div class="g-snippet">${hl(r.snippet, query)}</div>` : ''}
+        <div class="g-meta">
+          ${r.author ? `<span class="bili">UP: ${esc(r.author)}</span>` : ''}
+          ${r.play ? `<span>▶ ${fmtNum(r.play)}</span>` : ''}
+          ${r.duration ? `<span>${esc(r.duration)}</span>` : ''}
+        </div>
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'github') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav"><img src="https://github.com/favicon.ico" alt="" onerror="this.style.display='none'"></span>
+          <span class="g-site">github.com/${esc(r.title)}</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        <div class="g-snippet">${hl(r.snippet, query)}</div>
+        <div class="g-meta">
+          <span class="star">★ ${(r.stars || 0).toLocaleString()}</span>
+          <span>⑂ ${(r.forks || 0).toLocaleString()}</span>
+          ${r.lang ? `<span>● ${esc(r.lang)}</span>` : ''}
+          ${r.updated ? `<span>${esc(r.updated)}</span>` : ''}
+        </div>
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'so') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav"><img src="https://stackoverflow.com/favicon.ico" alt="" onerror="this.style.display='none'"></span>
+          <span class="g-site">stackoverflow.com</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        <div class="g-snippet">${hl(r.snippet, query)}</div>
+        <div class="g-meta">
+          <span class="so">▲ ${r.score}</span>
+          <span>${r.isAnswered ? '✓ 已解决' : '○ 待解决'}</span>
+          <span>${r.answers} 个回答</span>
+        </div>
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'hn') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav" style="background:#ff6600;color:#fff;font-weight:700">Y</span>
+          <span class="g-site">${esc(getHost(r.url))}</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        ${r.snippet ? `<div class="g-snippet">${hl(r.snippet, query)}</div>` : ''}
+        <div class="g-meta">
+          <span class="hn">▲ ${r.points}</span>
+          <span>${r.comments} 评论</span>
+        </div>
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'itunes') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav">${r.art ? `<img src="${esc(r.art)}" alt="" onerror="this.style.display='none'">` : '🎵'}</span>
+          <span class="g-site">itunes.apple.com</span>
+          <span class="g-tag">${esc(r.type)}</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        ${r.snippet ? `<div class="g-snippet">${hl(r.snippet, query)}</div>` : ''}
+      </a>`;
+    });
+    return html;
+  }
+
+  if (src.id === 'book') {
+    results.forEach(r => {
+      html += `<a class="g-result" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="g-url">
+          <span class="g-fav">${r.cover ? `<img src="${esc(r.cover)}" alt="" onerror="this.style.display='none'">` : '📚'}</span>
+          <span class="g-site">openlibrary.org</span>
+        </div>
+        <div class="g-title">${hl(r.title, query)}</div>
+        ${r.snippet ? `<div class="g-snippet">${hl(r.snippet, query)}</div>` : ''}
+      </a>`;
+    });
+    return html;
+  }
+
+  return html;
+}
+
+const MORE_PLATFORMS = [
+  {name:'抖音',     icon:'🎵', url:'https://www.douyin.com/search/'},
+  {name:'B站',      icon:'📺', url:'https://search.bilibili.com/all?keyword='},
+  {name:'知乎',     icon:'🔵', url:'https://www.zhihu.com/search?type=content&q='},
+  {name:'微博',     icon:'📢', url:'https://s.weibo.com/weibo?q='},
+  {name:'小红书',   icon:'📕', url:'https://www.xiaohongshu.com/search_result?keyword='},
+  {name:'掘金',     icon:'⛏️', url:'https://juejin.cn/search?query='},
+  {name:'CSDN',     icon:'📘', url:'https://so.csdn.net/so/search?q='},
+  {name:'博客园',   icon:'📗', url:'https://zzk.cnblogs.com/s?w='},
+  {name:'豆瓣',     icon:'🌱', url:'https://www.douban.com/search?q='},
+  {name:'豆瓣电影', icon:'🎬', url:'https://search.douban.com/movie/subject_search?search_text='},
+  {name:'什么值得买',icon:'🛒', url:'https://search.smzdm.com/?c=home&s='},
+  {name:'36氪',     icon:'📈', url:'https://36kr.com/search/articles/'},
+  {name:'少数派',   icon:'📰', url:'https://sspai.com/search/post/'},
+  {name:'起点',     icon:'📖', url:'https://www.qidian.com/so/'},
+  {name:'Bing中国', icon:'🅱️', url:'https://cn.bing.com/search?q='},
+  {name:'百度',     icon:'🐾', url:'https://www.baidu.com/s?wd='}
+];
+
+function renderMorePlatforms(query) {
+  const q = encodeURIComponent(query);
+  return `<div class="more-platforms">
+    <div class="mp-title">🔗 到其他平台搜索「${esc(query)}」</div>
+    <div class="mp-grid">
+      ${MORE_PLATFORMS.map(p => `
+        <a class="mp-item" href="${p.url}${q}" target="_blank" rel="noopener noreferrer">
+          <span class="ic">${p.icon}</span><span>${p.name}</span>
+        </a>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   事件
+   ========================================================= */
+$goHome.addEventListener('click', () => doSearch($qHome.value));
+$qHome.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch($qHome.value); });
+$goResults.addEventListener('click', () => doSearch($qResults.value));
+$qResults.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch($qResults.value);
+  if (e.key === 'Escape') $qResults.blur();
+});
+
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement || {}).tagName;
+  if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') {
+    e.preventDefault();
+    if (state.view === 'results') $qResults.focus();
+    else $qHome.focus();
+  }
+  if (e.key === 'Escape' && $settingsPanel.classList.contains('show')) closeSettings();
+});
+
+function goHome() {
+  state.view = 'home';
+  document.body.dataset.view = 'home';
+  $resultsView.classList.remove('show');
+  $qHome.value = '';
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete('q');
+    history.replaceState(null, '', url.toString());
+  } catch (e) {}
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return false;
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  document.body.dataset.tab = tab;
+  if (tab === 'directory') {
+    $navBtn.innerHTML = '<span>🔍</span><span class="nav-label">搜索</span>';
+    renderDirectory();
+  } else {
+    $navBtn.innerHTML = '<span>🎁</span><span class="nav-label">宝藏导航</span>';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$navBtn.addEventListener('click', () => {
+  switchTab(state.tab === 'search' ? 'directory' : 'search');
+});
+
+/* =========================================================
+   宝藏导航
+   ========================================================= */
+function renderCats() {
+  $cats.innerHTML = CATS.map(c => {
+    const cnt = c.id === 'all' ? DATA.length : (COUNT[c.id] || 0);
+    if (c.id !== 'all' && cnt === 0) return '';
+    return `<button class="cat ${state.cat === c.id ? 'on' : ''}" data-cat="${c.id}">
+      <span>${c.icon}</span><span>${c.name}</span><span class="cnt">${cnt}</span>
+    </button>`;
+  }).join('');
+}
+
+function getDirectoryList() {
+  return DATA.filter(d => {
+    if (state.cat !== 'all' && d.c !== state.cat) return false;
+    if (state.favOnly && !favs.has(d.id)) return false;
+    return true;
+  });
+}
+
+const RENDER_LIMIT = 800;
+
+function renderDirectory() {
+  renderCats();
+  const list = getDirectoryList();
+  if (!list.length) {
+    $grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--muted)">
+      <div style="font-size:40px;margin-bottom:14px;opacity:.5">${state.favOnly ? '⭐' : '🔍'}</div>
+      <h3 style="font-size:15px;color:var(--text);font-weight:600;margin-bottom:8px">${state.favOnly ? '还没有收藏任何站点' : '这个分类下暂时没有站点'}</h3>
+    </div>`;
+    return;
+  }
+  const show = list.slice(0, RENDER_LIMIT);
+  let html = show.map((d, idx) => {
+    const delay = Math.min(idx, 20) * 5;
+    const isFav = favs.has(d.id);
+    return `<div class="card-wrap" data-id="${d.id}" style="animation-delay:${delay}ms">
+      <a class="card" href="${esc(d.u)}" target="_blank" rel="noopener noreferrer">
+        <div class="ico">${d.i}</div>
+        <div class="c-body">
+          <div class="c-title">${esc(d.n)}</div>
+          <div class="c-desc">${esc(d.d)}</div>
+          <div class="c-tags">${d.t.slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        </div>
+      </a>
+      <button class="fav ${isFav ? 'on' : ''}" data-fav="${d.id}" title="${isFav ? '取消收藏' : '收藏'}">★</button>
+    </div>`;
+  }).join('');
+  if (list.length > RENDER_LIMIT) {
+    html += `<div style="grid-column:1/-1;text-align:center;padding:28px 20px;color:var(--muted);font-size:13px">已显示前 ${RENDER_LIMIT} 条，还有 ${list.length - RENDER_LIMIT} 条</div>`;
+  }
+  $grid.innerHTML = html;
+}
+
+$cats.addEventListener('click', e => {
+  const btn = e.target.closest('.cat');
+  if (!btn) return;
+  state.cat = btn.dataset.cat;
+  renderDirectory();
+  window.scrollTo({ top: Math.max(0, $cats.offsetTop - 100), behavior: 'smooth' });
+});
+
+$grid.addEventListener('click', e => {
+  const favBtn = e.target.closest('.fav');
+  if (favBtn) {
+    e.preventDefault(); e.stopPropagation();
+    const id = Number(favBtn.dataset.fav);
+    if (favs.has(id)) { favs.delete(id); favBtn.classList.remove('on'); favBtn.title = '收藏'; }
+    else { favs.add(id); favBtn.classList.add('on'); favBtn.title = '取消收藏'; }
+    saveFavs();
+    if (state.favOnly) setTimeout(renderDirectory, 160);
+  }
+});
+
+/* =========================================================
+   OpenSearch 自动注册
+   ========================================================= */
+(function registerOpenSearch() {
+  try {
+    const templateUrl = location.origin + location.pathname + '?q={searchTerms}';
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Wnebts</ShortName>
+  <Description>Wnebts 聚合搜索</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16" type="image/x-icon">${location.origin}/favicon.ico</Image>
+  <Url type="text/html" method="get" template="${templateUrl.replace(/&/g, '&amp;')}"/>
+</OpenSearchDescription>`;
+    const link = document.createElement('link');
+    link.rel = 'search';
+    link.type = 'application/opensearchdescription+xml';
+    link.title = 'Wnebts';
+    link.href = 'data:application/opensearchdescription+xml;charset=utf-8,' + encodeURIComponent(xml);
+    document.head.appendChild(link);
+  } catch (e) {}
+})();
+
+/* =========================================================
+   启动
+   ========================================================= */
+document.getElementById('ftTotal').textContent = DATA.length;
+loadSourcePrefs();
+renderSourceList();
+renderQuickActions();
+renderCats();
+renderDirectory();
+loadTreasures();
+
+// URL 参数自动搜索
+(function autoSearch() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q && q.trim()) {
+      $qHome.value = q;
+      setTimeout(() => doSearch(q), 200);
+      return;
+    }
+  } catch (e) {}
+  setTimeout(() => $qHome.focus(), 250);
+})();
+</script>
+</body>
+</html>
