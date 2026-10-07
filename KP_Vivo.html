@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>孩子守护 (vivo)</title>
+    <style>
+        /* ========== 全局变量与基础样式 ========== */
+        :root {
+            --primary-color: #415FFF;
+            --bg-color: #F4F5F7;
+            --card-bg: #FFFFFF;
+            --text-main: #1A1A1A;
+            --text-sub: #888888;
+            --border-color: #EEEEEE;
+            --danger-color: #FF3B30;
+            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body, html { height: 100%; width: 100%; overflow: hidden; background-color: var(--bg-color); }
+        
+        #app { display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; position: relative; }
+
+        /* 状态栏与导航栏 */
+        .status-bar { height: env(safe-area-inset-top, 20px); background: transparent; width: 100%; flex-shrink: 0; z-index: 10; }
+        .header-bar { height: 44px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px; position: relative; z-index: 10; background: var(--bg-color); }
+        .header-bar .back-btn { position: absolute; left: 16px; width: 24px; height: 24px; display: flex; align-items: center; cursor: pointer; }
+        .header-bar .header-title { width: 100%; text-align: center; font-size: 17px; font-weight: 600; color: var(--text-main); }
+
+        .app-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px; position: relative; }
+        
+        /* 页面切换 */
+        .page { display: none; animation: fadeIn 0.2s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0.8; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ========== 底部导航栏 ========== */
+        .tab-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: calc(60px + var(--safe-area-bottom));
+            background: #FFFFFF; border-top: 1px solid var(--border-color);
+            display: flex; justify-content: space-around; align-items: flex-start; padding-top: 8px;
+            padding-bottom: var(--safe-area-bottom); z-index: 100;
+        }
+        .tab-item { display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-size: 10px; cursor: pointer; flex: 1; position: relative; }
+        .tab-item.active { color: var(--primary-color); }
+        .tab-item .icon { width: 22px; height: 22px; margin-bottom: 2px; fill: currentColor; }
+        .tab-item .badge { position: absolute; top: 4px; right: 25%; width: 8px; height: 8px; background: #FF3B30; border-radius: 50%; display: none; }
+        
+        /* ========== 通用组件 ========== */
+        .card { background: var(--card-bg); border-radius: 12px; margin: 12px 16px; overflow: hidden; }
+        .list-item { display: flex; align-items: center; padding: 16px; background: var(--card-bg); cursor: pointer; transition: background 0.1s; }
+        .list-item:active { background: #F9F9F9; }
+        .list-item .icon-wrap { width: 24px; height: 24px; margin-right: 12px; display: flex; align-items: center; justify-content: center; fill: var(--text-main); flex-shrink: 0; }
+        .list-item .text-wrap { flex: 1; }
+        .list-item .title { font-size: 15px; color: var(--text-main); margin-bottom: 4px; }
+        .list-item .subtitle { font-size: 12px; color: var(--text-sub); }
+        .list-item .right-text { font-size: 13px; color: var(--text-sub); display: flex; align-items: center; }
+        .list-item .arrow { width: 16px; height: 16px; margin-left: 8px; fill: #CCC; flex-shrink: 0; }
+        .divider { height: 1px; background: var(--border-color); margin: 0 16px; }
+
+        .btn { display: block; width: 100%; padding: 12px; border-radius: 20px; font-size: 15px; font-weight: 500; text-align: center; border: none; outline: none; cursor: pointer; transition: opacity 0.2s; }
+        .btn:active { opacity: 0.8; }
+        .btn-primary { background: var(--primary-color); color: #fff; }
+        .btn-outline { background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        .btn-danger-outline { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .btn-text { background: transparent; color: var(--text-main); }
+
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: #E0E4FF; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 12px; flex-shrink: 0; }
+        .avatar-kid { background: #FFF3E0; }
+
+        /* ========== 弹窗样式 (Modals) ========== */
+        .modal-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .modal-mask.show { display: flex; }
+        
+        .modal-center { background: #fff; width: 270px; border-radius: 20px; padding: 24px 20px; text-align: center; animation: scaleIn 0.2s ease; display: flex; flex-direction: column; align-items: center; }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-center .modal-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 16px; }
+        .modal-center .modal-desc { font-size: 14px; color: var(--text-sub); line-height: 1.5; margin-bottom: 24px; text-align: center; width: 100%; }
+        .modal-center .modal-btn-group { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+        .modal-bottom { position: absolute; bottom: 0; left: 0; width: 100%; background: #F4F5F7; border-radius: 20px 20px 0 0; padding-bottom: var(--safe-area-bottom); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); z-index: 1001; }
+        .modal-mask.show .modal-bottom { transform: translateY(0); }
+        .modal-bottom .sheet-item { background: #fff; padding: 18px; font-size: 16px; color: var(--text-main); text-align: center; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+        .modal-bottom .sheet-item:active { background: #F9F9F9; }
+        .modal-bottom .sheet-item:last-child { border-bottom: none; }
+        .modal-bottom .sheet-cancel { margin-top: 8px; border-radius: 0; color: var(--text-sub); font-weight: 500; }
+        .modal-bottom .sheet-danger { color: var(--danger-color); }
+
+        /* ========== Vivo 原生滚轮选择器 (Wheel Picker) ========== */
+        .picker-modal { 
+            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; 
+            border-radius: 20px 20px 0 0; padding-bottom: var(--safe-area-bottom);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); 
+            z-index: 1001; display: flex; flex-direction: column;
+        }
+        .modal-mask.show .picker-modal { transform: translateY(0); }
+        
+        .picker-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 16px 20px; border-bottom: 1px solid #F0F0F0; 
+        }
+        .picker-header .picker-cancel { font-size: 16px; color: var(--text-sub); cursor: pointer; }
+        .picker-header .picker-title { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .picker-header .picker-confirm { font-size: 16px; color: var(--primary-color); font-weight: 500; cursor: pointer; }
+
+        .picker-body { 
+            position: relative; height: 200px; display: flex; justify-content: center; overflow: hidden; padding: 0 20px;
+        }
+        /* 中间高亮线 */
+        .picker-indicator { 
+            position: absolute; top: 80px; left: 20px; right: 20px; height: 40px; 
+            border-top: 1px solid #E5E5E5; border-bottom: 1px solid #E5E5E5; pointer-events: none; 
+        }
+        /* 上下渐隐遮罩 */
+        .picker-mask-top, .picker-mask-bottom {
+            position: absolute; left: 0; width: 100%; height: 80px; pointer-events: none; z-index: 2;
+        }
+        .picker-mask-top { top: 0; background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.4)); }
+        .picker-mask-bottom { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.4)); }
+
+        .picker-column { 
+            flex: 1; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; 
+            scrollbar-width: none; -ms-overflow-style: none; padding: 80px 0; text-align: center; 
+        }
+        .picker-column::-webkit-scrollbar { display: none; }
+        .picker-item { 
+            height: 40px; line-height: 40px; scroll-snap-align: center; 
+            font-size: 16px; color: #999; transition: all 0.2s; 
+        }
+        .picker-item.active { font-size: 20px; font-weight: 600; color: var(--text-main); }
+
+        /* ========== 页面特定样式 ========== */
+        .guard-header { background: var(--card-bg); padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        
+        /* SVG 环形进度条 */
+        .ring-container { position: relative; width: 100px; height: 100px; margin: 0 auto 10px; }
+        .ring-svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #F0F0F0; stroke-width: 8; }
+        .ring-progress { fill: none; stroke: #415FFF; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+        .ring-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ring-text .value { font-size: 24px; font-weight: 600; color: var(--text-main); }
+        .ring-text .unit { font-size: 12px; color: var(--text-sub); }
+
+        .banner-img { width: 100%; height: 120px; background: #DDEBFF; border-radius: 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: #415FFF; font-weight: bold; font-size: 14px; }
+        .guard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 16px 12px; }
+        .guard-grid-item { background: var(--card-bg); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .guard-grid-item .label { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; }
+        .guard-grid-item .status-text { font-size: 14px; font-weight: 600; color: #FF3B30; }
+
+        .profile-header { background: var(--card-bg); padding: 20px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .profile-info { display: flex; align-items: center; }
+        .profile-name { font-size: 18px; font-weight: 600; color: var(--text-main); }
+        .profile-role { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+        .btn-unbind { font-size: 12px; color: var(--primary-color); border: 1px solid var(--primary-color); padding: 4px 10px; border-radius: 12px; background: transparent; }
+
+        .notify-item { background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+        .notify-time { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; display: flex; align-items: center; }
+        .notify-content { font-size: 14px; color: var(--text-main); line-height: 1.5; }
+
+        .input-group { margin: 16px; }
+        .input-group label { display: block; font-size: 14px; color: var(--text-sub); margin-bottom: 8px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; outline: none; background: #fff; }
+        .input-group textarea { height: 120px; resize: none; }
+
+        .link-text { color: var(--primary-color); text-decoration: none; }
+        .link-text:active { text-decoration: underline; }
+
+        #toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; display: none; z-index: 2000; text-align: center; max-width: 80%; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="status-bar"></div>
+
+    <header class="header-bar" id="appHeader">
+        <div class="back-btn" id="backBtn" onclick="goBack()" style="display: none;">
+            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="#333"/></svg>
+        </div>
+        <div class="header-title" id="headerTitle">守护</div>
+    </header>
+
+    <main class="app-content" id="appContent">
+        
+        <!-- 页面 1: 守护 (Guard Home) -->
+        <div id="page-guard-home" class="page active">
+            <div class="guard-header" onclick="navigateTo('page-guard-child', '您守护的孩子')">
+                <div style="display: flex; align-items: center;">
+                    <div class="avatar avatar-kid" style="width: 40px; height: 40px; font-size: 20px;">👦</div>
+                    <div>
+                        <div style="font-size: 16px; font-weight: 600;">宝宝1</div>
+                        <div style="font-size: 12px; color: var(--text-sub);">kid04990567</div>
+                    </div>
+                </div>
+                <svg class="arrow" viewBox="0 0 24 24" style="fill: #ccc; width: 20px; height: 20px;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+            </div>
+            <div class="guard-card" style="margin: 0 16px 12px;">
+                <div class="banner-img">儿童使用场景插图</div>
+            </div>
+            <div class="guard-grid">
+                <div class="guard-grid-item">
+                    <div class="label">使用时长</div>
+                    <div class="ring-container">
+                        <svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="40"></circle>
+                            <circle class="ring-progress" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="50.24"></circle>
+                        </svg>
+                        <div class="ring-text"><span class="value">48</span><span class="unit">分钟</span></div>
+                    </div>
+                </div>
+                <div class="guard-grid-item">
+                    <div class="label">视力保护</div>
+                    <div class="status-text">👍 今天表现很棒</div>
+                    <div class="value" style="font-size: 18px; font-weight: 600; margin-top: 4px;">0<span style="font-size: 12px; font-weight: normal;">次</span></div>
+                </div>
+            </div>
+            <div class="card" style="padding: 0; margin-top: 12px;">
+                <div class="list-item" onclick="showToast('查看哔哩哔哩使用详情')"><div class="icon-wrap" style="background: #E3F2FD; border-radius: 8px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#1E88E5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div><div class="text-wrap"><div class="title">哔哩哔哩</div></div><span class="right-text" style="color: #FFC107; font-weight: bold;">18 分钟</span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('查看百词斩使用详情')"><div class="icon-wrap" style="background: #E8EAF6; border-radius: 8px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#3F51B5"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div><div class="text-wrap"><div class="title">百词斩</div></div><span class="right-text">11 分钟</span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('查看百度网盘使用详情')"><div class="icon-wrap" style="background: #E0F7FA; border-radius: 8px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#00BCD4"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></div><div class="text-wrap"><div class="title">百度网盘</div></div><span class="right-text">4 分钟</span></div>
+            </div>
+            <div style="padding: 16px 16px 8px; font-size: 13px; color: var(--text-sub);">孩子位置</div>
+            <div class="card" style="text-align: center; padding: 30px 16px;">
+                <svg viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: #FF3B30; margin-bottom: 10px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <div style="font-size: 13px; color: var(--text-sub);">定位失败，孩子设备网络异常</div>
+            </div>
+        </div>
+
+        <!-- 页面 2: 您守护的孩子 (Guard Child) -->
+        <div id="page-guard-child" class="page">
+            <div class="card" style="padding: 0; margin-top: 12px;">
+                <div class="list-item" onclick="navigateTo('page-member-child', '成员信息')">
+                    <div class="avatar avatar-kid" style="width: 40px; height: 40px; font-size: 20px;">👦</div>
+                    <div class="text-wrap"><div class="title">宝宝1</div><div class="subtitle">vivo账号: kid04990567</div></div>
+                    <svg class="arrow" viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: #ccc;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                </div>
+            </div>
+            <div style="padding: 0 16px; font-size: 13px; color: var(--text-sub); margin-top: 16px;">“宝宝1”已登录的设备</div>
+            <div class="card" style="padding: 0; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; padding: 16px;">
+                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #415FFF; margin-right: 12px;"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                    <span style="font-size: 15px;">vivo X80</span>
+                </div>
+                <button class="btn btn-outline" style="width: auto; padding: 6px 16px; font-size: 13px; margin-right: 16px; color: var(--danger-color); border-color: var(--danger-color);" onclick="showToast('已暂停守护')">暂停守护</button>
+            </div>
+            <div style="padding: 0 16px; font-size: 12px; color: #999; margin-top: 8px;">数据同步时间: 2026-10-07 13:58:48</div>
+            <div style="padding: 24px 16px;"><button class="btn btn-outline" style="color: var(--danger-color); border-color: var(--danger-color); background: #fff;" onclick="showRemoveGroupModal()">解除守护关系</button></div>
+        </div>
+
+        <!-- 页面 3: 守护设置 (Guard Settings) -->
+        <div id="page-guard-settings" class="page">
+            <div class="card" style="padding: 0; margin-top: 12px;">
+                <div class="list-item" onclick="navigateTo('page-device-limit', '设备限额')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg></div><div class="text-wrap"><div class="title">设备限额</div><div class="subtitle">设置设备的每日可用时长</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-app-limit', '应用限额')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6-6h4V4h-4v4zm6 0h4V4h-4v4zm0 6h4v-4h-4v4zm-6 6h4v-4h-4v4zm6 0h4v-4h-4v4z"/></svg></div><div class="text-wrap"><div class="title">应用限额</div><div class="subtitle">限制应用使用时长</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-always-allow', '始终允许')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div class="text-wrap"><div class="title">始终允许</div><div class="subtitle">设置始终允许的应用</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-health-guard', '健康守护')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div><div class="text-wrap"><div class="title">健康守护</div><div class="subtitle">帮助您孩子建立健康使用设备的习惯</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-install-permission', '应用安装许可')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H8v-2h6v2zm2-4H8v-2h8v2z"/></svg></div><div class="text-wrap"><div class="title">应用安装许可</div><div class="subtitle">限制应用的安装与卸载</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+        </div>
+
+        <!-- 页面 4: 设备限额 (Device Limit) -->
+        <div id="page-device-limit" class="page">
+            <div style="padding: 16px; font-size: 14px; color: var(--text-sub); line-height: 1.5;">到达停用时间段或可用时长用完后将禁用设备，始终允许的应用及电话、信息等基础应用仍可使用。</div>
+            <div class="card" style="padding: 0; margin-top: 0;">
+                <div class="list-item" onclick="showWheelPicker('设置停用时间', 'time-range')">
+                    <div class="text-wrap"><div class="title">停用时间</div></div>
+                    <span class="right-text" id="stop-time-text">23:00-次日07:00 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span>
+                </div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('添加停用时间')"><div class="text-wrap"><div class="title" style="color: var(--primary-color);">添加停用时间</div></div></div>
+            </div>
+            <div class="card" style="padding: 0;">
+                <div class="list-item" onclick="showWheelPicker('设置可用时长', 'duration')">
+                    <div class="text-wrap"><div class="title">可用时长</div></div>
+                    <span class="right-text" id="duration-text">每天 1小时 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span>
+                </div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('添加可用时长')"><div class="text-wrap"><div class="title" style="color: var(--primary-color);">添加可用时长</div></div></div>
+            </div>
+        </div>
+
+        <!-- 页面 5: 应用限额 (App Limit) -->
+        <div id="page-app-limit" class="page">
+            <div style="padding: 16px; font-size: 14px; color: var(--text-sub); line-height: 1.5;">设置应用每日使用时长，超出后将限制使用，需要授权才能继续使用。</div>
+            <div style="padding: 60px 16px; text-align: center;">
+                <div style="font-size: 14px; color: #999; margin-bottom: 20px;">暂无应用限额</div>
+                <button class="btn btn-outline" style="width: 80%; margin: 0 auto;" onclick="showToast('添加限额应用')">添加限额</button>
+            </div>
+        </div>
+
+        <!-- 页面 6: 始终允许 (Always Allow) -->
+        <div id="page-always-allow" class="page">
+            <div style="padding: 16px; font-size: 14px; color: var(--text-sub); line-height: 1.5;">添加为始终允许的应用不受设备限额、应用限额的约束，电话、信息等系统应用默认开启。</div>
+            <div style="padding: 0 16px; font-size: 13px; color: var(--text-sub); margin-bottom: 8px;">始终允许的应用</div>
+            <div class="card" style="padding: 0; margin-top: 0;">
+                <div class="list-item" onclick="showToast('取消允许123云盘')"><div class="icon-wrap" style="background: #E3F2FD; border-radius: 6px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#1E88E5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div><div class="text-wrap"><div class="title">123云盘</div></div><svg class="arrow" viewBox="0 0 24 24" style="fill: #ccc; width: 16px; height: 16px;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('取消允许百词斩')"><div class="icon-wrap" style="background: #E8EAF6; border-radius: 6px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#3F51B5"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div><div class="text-wrap"><div class="title">百词斩</div></div><svg class="arrow" viewBox="0 0 24 24" style="fill: #ccc; width: 16px; height: 16px;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('取消允许百度输入法定制版')"><div class="icon-wrap" style="background: #FFF3E0; border-radius: 6px; padding: 4px;"><svg viewBox="0 0 24 24" fill="#FF9800"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg></div><div class="text-wrap"><div class="title">百度输入法定制版</div></div><svg class="arrow" viewBox="0 0 24 24" style="fill: #ccc; width: 16px; height: 16px;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+            <div style="padding: 16px;"><button class="btn btn-outline" onclick="showToast('选取应用')">选取应用</button></div>
+        </div>
+
+        <!-- 页面 7: 健康守护 (Health Guard) -->
+        <div id="page-health-guard" class="page">
+            <div style="padding: 16px; font-size: 14px; color: var(--text-sub); line-height: 1.5;">当孩子处于不健康的环境或以不健康的姿势使用时，将会及时提醒孩子。</div>
+            <div class="card" style="padding: 0; margin-top: 0;">
+                <div class="list-item"><div class="text-wrap"><div class="title">护眼模式</div><div class="subtitle">减少蓝光刺激，保护眼睛，缓解视觉疲劳。</div></div><div style="width: 44px; height: 24px; background: #ddd; border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px;"></div></div></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">光线提醒</div><div class="subtitle">当环境光过亮、过暗，提醒到正常光线下使用。</div></div><div style="width: 44px; height: 24px; background: var(--primary-color); border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;"></div></div></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">走路看屏幕提醒</div><div class="subtitle">边走路边玩时，发出提醒。</div></div><div style="width: 44px; height: 24px; background: var(--primary-color); border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;"></div></div></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">抖动环境提醒</div><div class="subtitle">长时间在抖动环境使用时，发出提醒。</div></div><div style="width: 44px; height: 24px; background: var(--primary-color); border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;"></div></div></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">躺着看屏幕提醒</div><div class="subtitle">平躺或侧躺看屏幕时，发出提醒。</div></div><div style="width: 44px; height: 24px; background: var(--primary-color); border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;"></div></div></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">休息提醒</div><div class="subtitle">连续使用设备一定时间后，默认提醒休息10分钟。</div></div><div style="width: 44px; height: 24px; background: var(--primary-color); border-radius: 12px; position: relative;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;"></div></div></div>
+            </div>
+            <div class="card" style="padding: 0;">
+                <div class="list-item" onclick="showWheelPicker('连续使用时长', 'duration')"><div class="text-wrap"><div class="title">连续使用时长</div></div><span class="right-text" id="continuous-time-text">45分钟 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showWheelPicker('单次休息时长', 'duration')"><div class="text-wrap"><div class="title">单次休息时长</div></div><span class="right-text" id="rest-time-text">10分钟 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+            </div>
+        </div>
+
+        <!-- 页面 8: 应用安装许可 (Install Permission) -->
+        <div id="page-install-permission" class="page">
+            <div style="padding: 16px; font-size: 14px; color: var(--text-sub); line-height: 1.5;">设置为不允许则限制孩子安装/卸载应用，需要输入健康使用设备密码或发送远程申请家长同意后才可完成安装/卸载应用。</div>
+            <div class="card" style="padding: 0; margin-top: 0;">
+                <div class="list-item" onclick="showToast('设置安装应用许可')"><div class="text-wrap"><div class="title">安装应用</div></div><span class="right-text">允许 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('设置卸载应用许可')"><div class="text-wrap"><div class="title">卸载应用</div></div><span class="right-text">允许 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+            </div>
+            <div style="padding: 16px; font-size: 12px; color: #999; line-height: 1.5;">若孩子的设备“设置”>“健康使用设备”存在“应用安装许可”设置项，则孩子设备支持此功能。</div>
+        </div>
+
+        <!-- 页面 9: 我的 (Profile) -->
+        <div id="page-profile" class="page">
+            <div class="profile-header">
+                <div class="profile-info"><div class="avatar">🐌</div><div><div class="profile-name">小蜗牛</div><div class="profile-role">您是家长</div></div></div>
+                <button class="btn-unbind" onclick="showUnbindParentModal()">解除家长角色</button>
+            </div>
+            <div class="card" style="padding: 0;">
+                <div class="list-item" onclick="navigateTo('page-family', '家庭群组')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div><div class="text-wrap"><div class="title">家庭群组</div><div class="subtitle">孩子账号和家庭成员</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('消息通知已开启')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg></div><div class="text-wrap"><div class="title">消息通知</div><div class="subtitle">接受孩子远程请求及状态变化等消息。</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('感谢您的评分！')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div><div class="text-wrap"><div class="title">给我们打分</div><div class="subtitle">喜欢就给我们打分鼓励</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('打开使用帮助')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg></div><div class="text-wrap"><div class="title">使用帮助</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-feedback', '问题反馈')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12zM7 9h10v2H7zm0-3h10v2H7z"/></svg></div><div class="text-wrap"><div class="title">问题反馈</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('已是最新版本')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="text-wrap"><div class="title">检查更新</div></div><span class="right-text">V4.9.3 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-about', '关于')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="text-wrap"><div class="title">关于</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+            <div class="card" style="padding: 0;">
+                <div class="list-item" onclick="navigateTo('page-security', '账号与安全')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></div><div class="text-wrap"><div class="title">账号与安全</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+            <div style="padding: 20px 16px;"><button class="btn btn-outline" style="color: #333; border-color: #ddd; background: #fff;" onclick="showLogoutModal()">退出账号</button></div>
+        </div>
+
+        <!-- 页面 10: 通知 (Notification) -->
+        <div id="page-notify" class="page">
+            <div style="padding: 16px; font-size: 13px; color: var(--text-sub);">今天</div>
+            <div style="padding: 0 16px;">
+                <div class="notify-item" onclick="showToast('查看详情')"><div class="notify-time"><div class="avatar avatar-kid" style="width: 20px; height: 20px; font-size: 12px; margin-right: 6px;">👦</div>12:49</div><div class="notify-content">您已远程守护 宝宝1 (kid04990567)</div></div>
+                <div class="notify-item" onclick="showToast('查看详情')"><div class="notify-time"><div class="avatar avatar-kid" style="width: 20px; height: 20px; font-size: 12px; margin-right: 6px;">👦</div>13:20</div><div class="notify-content">宝宝1 申请安装“游戏中心”，请及时处理。</div></div>
+            </div>
+        </div>
+
+        <!-- 页面 11: 家庭群组 (Family Group) -->
+        <div id="page-family" class="page">
+            <div class="card" style="padding: 0; margin-top: 12px;">
+                <div class="list-item" onclick="navigateTo('page-member-parent', '成员信息')"><div class="avatar" style="width: 40px; height: 40px; font-size: 20px; background: #FFF3E0;">🐌</div><div class="text-wrap"><div class="title">小蜗牛 <span style="font-size:12px; color:#999; font-weight:normal;">(我)</span></div><div class="subtitle">家庭群主</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-member-child', '成员信息')"><div class="avatar avatar-kid" style="width: 40px; height: 40px; font-size: 20px;">👦</div><div class="text-wrap"><div class="title">宝宝1</div><div class="subtitle">孩子</div></div><span class="right-text" style="color: var(--primary-color);">守护中</span><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" style="justify-content: center; color: var(--primary-color);" onclick="showToast('邀请家人')"><span style="font-size: 15px;">+ 邀请家人</span></div>
+            </div>
+        </div>
+
+        <!-- 页面 12: 家长成员信息 (Parent Member Info) -->
+        <div id="page-member-parent" class="page">
+            <div style="display: flex; align-items: center; padding: 24px 16px;">
+                <div class="avatar" style="width: 60px; height: 60px; font-size: 30px; background: #FFF3E0;">🐌</div>
+                <div><div style="font-size: 18px; font-weight: 600;">小蜗牛 (我)</div><div style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">vivo账号: 189******96</div></div>
+            </div>
+            <div class="card" style="padding: 0; margin-top: 0;"><div class="list-item"><div class="text-wrap"><div class="title">角色</div></div><span class="right-text">家庭群主</span></div></div>
+            <div style="padding: 20px 16px;"><button class="btn btn-outline" style="color: var(--danger-color); border-color: var(--danger-color); background: #fff;" onclick="showDisbandGroupModal()">解散群组</button></div>
+        </div>
+
+        <!-- 页面 13: 孩子成员信息 (Child Member Info) -->
+        <div id="page-member-child" class="page">
+            <div style="display: flex; align-items: center; padding: 24px 16px;">
+                <div class="avatar avatar-kid" style="width: 60px; height: 60px; font-size: 30px;">👦</div>
+                <div><div style="font-size: 18px; font-weight: 600;">宝宝1</div><div style="font-size: 13px; color: var(--text-sub); margin-top: 4px;">vivo账号: kid04990567</div></div>
+            </div>
+            <div class="card" style="padding: 0; margin-top: 0;">
+                <div class="list-item"><div class="text-wrap"><div class="title">备注名</div></div><span class="right-text">未设置 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">角色</div></div><span class="right-text">孩子 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showWheelPicker('选择出生日期', 'date')"><div class="text-wrap"><div class="title">出生日期</div></div><span class="right-text" id="birthdate-text">2016-10-07 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item"><div class="text-wrap"><div class="title">性别</div></div><span class="right-text">女 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+            </div>
+            <div style="padding: 20px 16px;"><button class="btn btn-outline" style="color: var(--danger-color); border-color: var(--danger-color); background: #fff;" onclick="showRemoveGroupModal()">移出群组</button></div>
+        </div>
+
+        <!-- 页面 14: 账号与安全 (Account Security) -->
+        <div id="page-security" class="page">
+            <div class="card" style="padding: 0; margin-top: 12px;">
+                <div class="list-item" onclick="showToast('vivo号不可修改')"><div class="text-wrap"><div class="title">vivo号</div></div><span class="right-text">vid_06894ul65508 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('修改密码')"><div class="text-wrap"><div class="title">修改密码</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('更换手机号')"><div class="text-wrap"><div class="title">手机号</div></div><span class="right-text">189******96 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('新设备登录24小时后可绑定邮箱')"><div class="text-wrap"><div class="title">安全邮箱</div></div><span class="right-text" style="color: var(--primary-color);">未设置 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('新设备登录24小时后可设置密保问题')"><div class="text-wrap"><div class="title">密保问题</div></div><span class="right-text" style="color: var(--primary-color);">未设置 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+            </div>
+            <div style="padding: 0 16px; font-size: 13px; color: var(--text-sub); margin-top: 16px;">更多安全服务</div>
+            <div class="card" style="padding: 0; margin-top: 8px;">
+                <div class="list-item" onclick="showToast('账号申诉')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg></div><div class="text-wrap"><div class="title">账号申诉</div><div class="subtitle">帮助修改账号信息、解除账号封禁等</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('冻结账号')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div><div class="text-wrap"><div class="title">冻结账号</div><div class="subtitle">账号出现安全风险，紧急冻结</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="navigateTo('page-cancel-account', '账号注销')"><div class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg></div><div class="text-wrap"><div class="title">注销账号</div><div class="subtitle">停止使用本账号并删除全部账号数据</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+        </div>
+
+        <!-- 页面 15: 账号注销 (Cancel Account) -->
+        <div id="page-cancel-account" class="page">
+            <div style="padding: 24px 16px; text-align: center; font-size: 18px; font-weight: bold;">vivo账号注销须知</div>
+            <div style="padding: 0 16px; font-size: 14px; color: #666; line-height: 1.6; padding-bottom: 40px;">
+                <p style="margin-bottom: 16px;">注销后，可能会导致您使用vivo服务有以下影响。请务必仔细阅读：</p>
+                <div style="display: flex; align-items: center; margin-bottom: 8px; font-weight: bold; color: #333;"><svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: #333; margin-right: 8px;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/></svg>服务访问限制</div>
+                <p style="margin-bottom: 16px;">无法再使用vivo账号访问官方服务（云服务、查找、应用商店、游戏中心、浏览器、钱包、i音乐、i主题、vivo官网、商城等）或第三方应用或游戏。</p>
+                <div style="display: flex; align-items: center; margin-bottom: 8px; font-weight: bold; color: #333;"><svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: #333; margin-right: 8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>永久清除或匿名化个人信息数据</div>
+                <p style="margin-bottom: 16px;">该账号下您添加或绑定的任何个人数据将被清除或匿名化处理（个人信息、云服务数据、原子笔记、云盘资料、会员等级、游戏VIP、交易记录、商城订单、售后订单、好友信息、小说书架、已购书籍、发帖记录、关注、评论、收藏信息、自建歌单等），数据永久删除无法找回。</p>
+                <div style="display: flex; align-items: center; margin-bottom: 8px; font-weight: bold; color: #333;"><svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: #333; margin-right: 8px;"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>虚拟资产清零</div>
+                <p style="margin-bottom: 16px;">请在注销前，确认您已消耗完成或自愿放弃该账号下的虚拟资产信息（积分、V钻、会员权益、会员礼包、优惠券、代金券、游戏礼包、游戏礼券、游戏角色、商城活动红包、商城换新鼓励金、兑换码、金豆、下载资源、已购资源等）。</p>
+                <div style="background: #FFF3E0; padding: 12px; border-radius: 8px; font-size: 12px;"><strong>温馨提醒：</strong><br>1. 请知悉，账号注销不代表当前账号在注销前的使用行为和相关责任得到豁免或减轻；</div>
+            </div>
+            <div style="padding: 20px 16px;"><button class="btn btn-danger-outline" onclick="showToast('账号注销申请已提交')">确认注销</button></div>
+        </div>
+
+        <!-- 页面 16: 问题反馈 (Feedback) -->
+        <div id="page-feedback" class="page">
+            <div class="input-group"><label>问题类别 <span style="color: red;">*</span></label><div style="display: flex; justify-content: space-between; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;" onclick="showToast('选择问题类别')"><span>孩子守护</span><svg class="arrow" viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: #ccc;"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div></div>
+            <div class="input-group"><label>问题描述 <span style="color: red;">*</span></label><textarea placeholder="请尽量详细描述您的问题（不少于10字）"></textarea><div style="text-align: right; font-size: 12px; color: #999; margin-top: 4px;">0/300</div></div>
+            <div class="input-group"><label>联系方式 <span style="color: red;">*</span></label><input type="text" placeholder="请留下您的手机号或邮箱，方便我们联系您"></div>
+            <div style="padding: 20px 16px;"><button class="btn btn-primary" onclick="showToast('提交成功，感谢您的反馈！')">提交</button></div>
+        </div>
+
+        <!-- 页面 17: 关于 (About) -->
+        <div id="page-about" class="page" style="text-align: center; padding-top: 60px;">
+            <div style="width: 80px; height: 80px; background: #4CAF50; border-radius: 16px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 40px;">🌱</div>
+            <h2 style="font-size: 20px; margin-bottom: 8px;">孩子守护</h2>
+            <p style="color: var(--text-sub); font-size: 14px; margin-bottom: 40px;">版本: V4.9.3</p>
+            <div class="card" style="padding: 0; text-align: left;">
+                <div class="list-item" onclick="showToast('拨打客服热线 95033')"><div class="text-wrap"><div class="title">客服热线</div></div><span class="right-text">95033 <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></span></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('查看个人信息收集清单')"><div class="text-wrap"><div class="title">个人信息收集清单</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('查看第三方收集清单')"><div class="text-wrap"><div class="title">个人信息第三方收集清单</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+                <div class="divider" style="margin:0 16px;"></div>
+                <div class="list-item" onclick="showToast('查看开源软件声明')"><div class="text-wrap"><div class="title">开源软件声明</div></div><svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+            </div>
+            <div style="margin-top: 40px; font-size: 12px; color: var(--text-sub); line-height: 1.8; padding: 0 20px;">
+                <a href="https://www.vivo.com.cn/about-vivo/privacy-policy" target="_blank" class="link-text">《孩子守护用户协议》</a>、
+                <a href="https://www.vivo.com.cn/about-vivo/privacy-policy" target="_blank" class="link-text">《孩子守护隐私政策》</a><br>
+                备案号：粤ICP备17035209号-43A<br>
+                Copyright © 2020-present 维沃移动通信有限公司
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="tab-bar">
+        <div class="tab-item" id="tab-guard" onclick="switchTab('tab-guard', 'page-guard-home', '守护')"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>首页</span></div>
+        <div class="tab-item" id="tab-guard-settings" onclick="switchTab('tab-guard-settings', 'page-guard-settings', '守护设置')"><svg class="icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg><span>守护</span></div>
+        <div class="tab-item" id="tab-notify" onclick="switchTab('tab-notify', 'page-notify', '通知')"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><span>通知</span><div class="badge" style="display: block;"></div></div>
+        <div class="tab-item" id="tab-profile" onclick="switchTab('tab-profile', 'page-profile', '我的')"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>我的</span></div>
+    </nav>
+
+    <!-- ================= 弹窗层 ================= -->
+    <div class="modal-mask" id="modalMask">
+        <!-- 居中提示弹窗 -->
+        <div class="modal-center" id="modalCenter" style="display: none;">
+            <div class="modal-title" id="modalCenterTitle">提示</div>
+            <div class="modal-desc" id="modalCenterDesc">确认要退出登录吗？</div>
+            <div class="modal-btn-group" id="modalCenterBtns">
+                <button class="btn btn-outline" onclick="closeModal()">确定</button>
+                <button class="btn btn-text" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+        <!-- 底部动作面板 -->
+        <div class="modal-bottom" id="modalBottom" style="display: none;">
+            <div class="sheet-item sheet-danger" onclick="closeModal(); showToast('账号已移出并注销');">移出并注销</div>
+            <div class="sheet-item" onclick="closeModal(); showToast('已转为普通账号');">移出并转为普通账号</div>
+            <div class="sheet-item sheet-cancel" onclick="closeModal()">取消</div>
+        </div>
+        <!-- 滚轮选择器 -->
+        <div class="picker-modal" id="pickerModal" style="display: none;">
+            <div class="picker-header">
+                <div class="picker-cancel" onclick="closeModal()">取消</div>
+                <div class="picker-title" id="pickerTitle">设置时间</div>
+                <div class="picker-confirm" id="pickerConfirmBtn">确定</div>
+            </div>
+            <div class="picker-body" id="pickerBody">
+                <div class="picker-indicator"></div>
+                <div class="picker-mask-top"></div>
+                <div class="picker-mask-bottom"></div>
+                <div id="pickerColumnsContainer" style="display: flex; width: 100%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+</div>
+
+<script>
+    // ================= 路由与状态 =================
+    let historyStack = [];
+    let currentPageId = 'page-guard-home';
+    let currentTabId = 'tab-guard';
+
+    function switchTab(tabId, pageId, title) {
+        historyStack = [];
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.getElementById('headerTitle').innerText = title;
+        document.getElementById('backBtn').style.display = 'none';
+        currentPageId = pageId;
+        currentTabId = tabId;
+        document.getElementById('appContent').scrollTop = 0;
+        if (tabId === 'tab-notify') document.querySelector('#tab-notify .badge').style.display = 'none';
+    }
+
+    function navigateTo(pageId, title) {
+        historyStack.push({ pageId: currentPageId, tabId: currentTabId, title: document.getElementById('headerTitle').innerText });
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.getElementById('headerTitle').innerText = title;
+        document.getElementById('backBtn').style.display = 'flex';
+        currentPageId = pageId;
+        document.getElementById('appContent').scrollTop = 0;
+    }
+
+    function goBack() {
+        if (historyStack.length > 0) {
+            const prev = historyStack.pop();
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            document.getElementById(prev.pageId).classList.add('active');
+            document.getElementById('headerTitle').innerText = prev.title;
+            currentPageId = prev.pageId;
+            if (historyStack.length === 0) document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('appContent').scrollTop = 0;
+        } else {
+            switchTab(currentTabId, currentPageId, document.getElementById('headerTitle').innerText);
+        }
+    }
+
+    // ================= 弹窗控制 =================
+    const modalMask = document.getElementById('modalMask');
+    const modalCenter = document.getElementById('modalCenter');
+    const modalBottom = document.getElementById('modalBottom');
+    const pickerModal = document.getElementById('pickerModal');
+    const pickerColumnsContainer = document.getElementById('pickerColumnsContainer');
+    const pickerTitle = document.getElementById('pickerTitle');
+    const pickerConfirmBtn = document.getElementById('pickerConfirmBtn');
+
+    function closeModal() {
+        modalMask.classList.remove('show');
+        modalCenter.style.display = 'none';
+        modalBottom.style.display = 'none';
+        pickerModal.style.display = 'none';
+    }
+
+    function showLogoutModal() {
+        document.getElementById('modalCenterTitle').innerText = '提示';
+        document.getElementById('modalCenterDesc').innerText = '确认要退出登录吗？';
+        document.getElementById('modalCenterBtns').innerHTML = `<button class="btn btn-outline" onclick="closeModal()">确定</button><button class="btn btn-text" onclick="closeModal()">取消</button>`;
+        modalCenter.style.display = 'flex'; modalMask.classList.add('show');
+    }
+
+    function showRemoveGroupModal() {
+        modalBottom.style.display = 'block'; modalMask.classList.add('show');
+    }
+
+    function showUnbindParentModal() {
+        document.getElementById('modalCenterTitle').innerText = '解除家长角色失败';
+        document.getElementById('modalCenterDesc').innerHTML = '您是家庭群组的家庭群主，您的家庭群组共2个家庭成员，请将所有家庭成员移出群组后再试。';
+        document.getElementById('modalCenterBtns').innerHTML = `<button class="btn btn-outline" onclick="closeModal(); navigateTo('page-family', '家庭群组')">去移出群组</button><button class="btn btn-text" onclick="closeModal()">取消</button>`;
+        modalCenter.style.display = 'flex'; modalMask.classList.add('show');
+    }
+
+    function showDisbandGroupModal() {
+        document.getElementById('modalCenterTitle').innerText = '解散群组';
+        document.getElementById('modalCenterDesc').innerHTML = '解散后，群组内所有成员将被移出，群组数据将被清除。是否确认解散？';
+        document.getElementById('modalCenterBtns').innerHTML = `<button class="btn btn-outline" onclick="closeModal(); showToast('群组已解散'); switchTab('tab-profile', 'page-profile', '我的');">确认解散</button><button class="btn btn-text" onclick="closeModal()">取消</button>`;
+        modalCenter.style.display = 'flex'; modalMask.classList.add('show');
+    }
+
+    // ================= 滚轮选择器 (Wheel Picker) =================
+    function showWheelPicker(title, type) {
+        pickerTitle.innerText = title;
+        pickerColumnsContainer.innerHTML = '';
+        modalCenter.style.display = 'none';
+        modalBottom.style.display = 'none';
+        pickerModal.style.display = 'flex';
+        modalMask.classList.add('show');
+
+        // 根据类型生成数据列
+        let columnsData = [];
+        let defaultIndexes = [];
+        let targetTextId = '';
+
+        if (type === 'date') {
+            // 年、月、日
+            let years = [], months = [], days = [];
+            for (let i = 2010; i <= 2030; i++) years.push(i + '年');
+            for (let i = 1; i <= 12; i++) months.push(i + '月');
+            for (let i = 1; i <= 31; i++) days.push(i + '日');
+            columnsData = [years, months, days];
+            defaultIndexes = [6, 9, 7]; // 2016-10-07
+            targetTextId = 'birthdate-text';
+        } else if (type === 'duration') {
+            // 小时、分钟 (简单处理：0-2小时，0-59分钟)
+            let hours = [], minutes = [];
+            for (let i = 0; i <= 2; i++) hours.push(i + '小时');
+            for (let i = 0; i <= 59; i++) minutes.push(i + '分钟');
+            columnsData = [hours, minutes];
+            if (title.includes('可用时长')) { defaultIndexes = [1, 0]; targetTextId = 'duration-text'; }
+            else if (title.includes('连续')) { defaultIndexes = [0, 45]; targetTextId = 'continuous-time-text'; }
+            else { defaultIndexes = [0, 10]; targetTextId = 'rest-time-text'; }
+        } else if (type === 'time-range') {
+            // 停用时间 (时、分 - 时、分)
+            let startHours = [], startMinutes = [], endHours = [], endMinutes = [];
+            for (let i = 0; i <= 23; i++) startHours.push(i + '时');
+            for (let i = 0; i <= 59; i++) startMinutes.push(i + '分');
+            for (let i = 0; i <= 23; i++) endHours.push(i + '时');
+            for (let i = 0; i <= 59; i++) endMinutes.push(i + '分');
+            columnsData = [startHours, startMinutes, endHours, endMinutes];
+            defaultIndexes = [23, 0, 7, 0]; // 23:00 - 07:00
+            targetTextId = 'stop-time-text';
+        }
+
+        // 渲染列
+        columnsData.forEach((data, colIndex) => {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'picker-column';
+            data.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'picker-item';
+                if (index === defaultIndexes[colIndex]) {
+                    itemDiv.classList.add('active');
+                }
+                itemDiv.innerText = item;
+                colDiv.appendChild(itemDiv);
+            });
+            pickerColumnsContainer.appendChild(colDiv);
+
+            // 初始化滚动位置
+            setTimeout(() => {
+                colDiv.scrollTop = defaultIndexes[colIndex] * 40;
+            }, 10);
+
+            // 监听滚动事件
+            let scrollTimer = null;
+            colDiv.addEventListener('scroll', () => {
+                // 实时高亮
+                const index = Math.round(colDiv.scrollTop / 40);
+                const items = colDiv.querySelectorAll('.picker-item');
+                items.forEach((item, i) => {
+                    item.classList.toggle('active', i === index);
+                });
+
+                // 滚动停止时的处理
+                if (scrollTimer) clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(() => {
+                    // 确保对齐
+                    colDiv.scrollTo({ top: index * 40, behavior: 'smooth' });
+                }, 150);
+            });
+        });
+
+        // 绑定确定事件
+        pickerConfirmBtn.onclick = () => {
+            const cols = pickerColumnsContainer.querySelectorAll('.picker-column');
+            let values = [];
+            cols.forEach(col => {
+                const index = Math.round(col.scrollTop / 40);
+                const item = col.querySelectorAll('.picker-item')[index];
+                if (item) values.push(item.innerText);
+            });
+
+            const targetEl = document.getElementById(targetTextId);
+            if (targetEl) {
+                if (type === 'date') {
+                    targetEl.innerHTML = `${values[0].replace('年','-')}${values[1].replace('月','-')}${values[2].replace('日','')} <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>`;
+                } else if (type === 'duration') {
+                    if (title.includes('可用时长')) {
+                        targetEl.innerHTML = `每天 ${values[0]}${values[1]} <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>`;
+                    } else {
+                        targetEl.innerHTML = `${values[0]}${values[1]} <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>`;
+                    }
+                } else if (type === 'time-range') {
+                    targetEl.innerHTML = `${values[0]}${values[1]}-次日${values[2]}${values[3]} <svg class="arrow" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>`;
+                }
+            }
+            closeModal();
+            showToast('设置成功');
+        };
+    }
+
+    // ================= Toast =================
+    let toastTimer = null;
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.style.display = 'block';
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    modalMask.addEventListener('click', (e) => { if (e.target === modalMask) closeModal(); });
+
+    // 初始化
+    switchTab('tab-guard', 'page-guard-home', '守护');
+</script>
+</body>
+</html>
