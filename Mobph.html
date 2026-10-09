@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobph — 移动端应用极简开发语言</title>
+<meta name="description" content="Mobph 是一门为移动端而生的极简编程语言，从源码直接编译为原生 Android APK。">
+<link rel="icon" type="image/png" href="MobIcon.png">
+<style>
+  :root {
+    --red: #E30613;
+    --red-dark: #C00510;
+    --dark: #1C2B3A;
+    --gray: #6B7280;
+    --gray-light: #9CA3AF;
+    --light: #F9FAFB;
+    --border: #E5E7EB;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    color: var(--dark);
+    line-height: 1.7;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: var(--red); }
+  img { display: block; max-width: 100%; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  code, pre {
+    font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  /* ---------- NAV ---------- */
+  nav {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  nav .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .brand img { width: 30px; height: 30px; flex-shrink: 0; }
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    font-size: 14.5px;
+    color: var(--gray);
+  }
+  nav ul a:hover { color: var(--dark); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 110px 0 100px;
+    text-align: center;
+  }
+  .hero .logo-big {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 32px;
+    object-fit: contain;
+  }
+  .hero h1 {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    line-height: 1;
+  }
+  .hero h1 .dot { color: var(--red); }
+  .hero .subtitle {
+    font-size: 22px;
+    color: var(--gray);
+    margin-bottom: 16px;
+    font-weight: 400;
+  }
+  .hero .desc {
+    font-size: 16px;
+    color: var(--gray);
+    max-width: 560px;
+    margin: 0 auto 36px;
+  }
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-block;
+    padding: 13px 30px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.15s ease;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+  }
+  .btn-primary:hover {
+    background: var(--red-dark);
+    border-color: var(--red-dark);
+    color: #fff;
+  }
+  .btn-ghost:hover {
+    border-color: var(--dark);
+    color: var(--dark);
+  }
+  .dl-hint {
+    font-size: 13px;
+    color: var(--gray-light);
+    margin-top: 18px;
+  }
+  .dl-hint code {
+    background: var(--light);
+    border: 1px solid var(--border);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--red);
+  }
+
+  /* ---------- SECTION ---------- */
+  section { padding: 96px 0; }
+  section.alt { background: var(--light); }
+  .section-title {
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .section-sub {
+    text-align: center;
+    color: var(--gray);
+    margin-bottom: 64px;
+    font-size: 15.5px;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .feature {
+    padding: 36px 28px;
+    background: #fff;
+  }
+  .feature .num {
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    margin-bottom: 16px;
+  }
+  .feature h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: -0.005em;
+  }
+  .feature p {
+    font-size: 14px;
+    color: var(--gray);
+    line-height: 1.75;
+  }
+
+  /* ---------- CODE ---------- */
+  .code-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  pre {
+    background: var(--dark);
+    color: #E5E7EB;
+    padding: 32px 28px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.85;
+    overflow-x: auto;
+    tab-size: 2;
+  }
+  pre code { white-space: pre; }
+  .tok-kw  { color: #FF7A85; }
+  .tok-str { color: #A5D6A7; }
+  .tok-num { color: #FFB86C; }
+  .tok-com { color: #7C8799; font-style: italic; }
+
+  /* ---------- STEPS ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  .step .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: var(--red);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-bottom: 18px;
+  }
+  .step h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 14px;
+    color: var(--gray);
+    line-height: 1.7;
+  }
+  .step code {
+    display: inline-block;
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--red);
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 56px 0 48px;
+    text-align: center;
+  }
+  footer .brand-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 14px;
+    color: var(--dark);
+  }
+  footer .brand-mini img { width: 22px; height: 22px; }
+  footer p {
+    font-size: 13.5px;
+    color: var(--gray-light);
+    line-height: 1.8;
+  }
+  footer .copy {
+    margin-top: 20px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 768px) {
+    nav ul { display: none; }
+    .hero { padding: 64px 0 56px; }
+    .hero h1 { font-size: 44px; }
+    .hero .subtitle { font-size: 17px; }
+    .hero .desc { font-size: 15px; }
+    .hero .logo-big { width: 72px; height: 72px; }
+    section { padding: 64px 0; }
+    .section-title { font-size: 26px; }
+    .section-sub { margin-bottom: 40px; font-size: 14.5px; }
+    .features { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; gap: 28px; }
+    pre { padding: 22px 18px; font-size: 12.5px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+<nav>
+  <div class="container">
+    <a href="#" class="brand">
+      <img src="MobIcon.png" alt="Mobph">
+      <span>Mobph</span>
+    </a>
+    <ul>
+      <li><a href="#features">特性</a></li>
+      <li><a href="#syntax">语法</a></li>
+      <li><a href="#start">开始</a></li>
+      <li><a href="https://wwaoy.lanzoue.com/b0188olr5g" target="_blank" rel="noopener">下载</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<header class="hero">
+  <div class="container">
+    <img class="logo-big" src="MobIcon.png" alt="Mobph">
+    <h1>Mobph<span class="dot">.</span></h1>
+    <p class="subtitle">移动端应用极简开发语言</p>
+    <p class="desc">从源码到可安装的 APK，只需一条命令。极简语法，原生性能，无需学习 Android 生态。</p>
+    <div class="btn-group">
+      <a href="https://wwaoy.lanzoue.com/b0188olr5g" target="_blank" rel="noopener" class="btn btn-primary">下载 Mobph</a>
+      <a href="#syntax" class="btn btn-ghost">查看语法</a>
+    </div>
+    <p class="dl-hint">下载密码：<code>ghrv</code> · 文件大小约 200 KB · Windows / macOS / Linux 通用</p>
+  </div>
+</header>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features">
+  <div class="container">
+    <h2 class="section-title">为什么是 Mobph</h2>
+    <p class="section-sub">自研编译器 · 官方工具链 · 零第三方依赖</p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="num">01</div>
+        <h3>极简语法</h3>
+        <p>缩进即结构，一行一个控件。写界面像写 Markdown，不需要 XML 或样板代码。</p>
+      </div>
+      <div class="feature">
+        <div class="num">02</div>
+        <h3>原生性能</h3>
+        <p>编译为原生 Android 视图，不是 WebView 套壳。滑动流畅，启动迅速。</p>
+      </div>
+      <div class="feature">
+        <div class="num">03</div>
+        <h3>一条命令</h3>
+        <p><code>mobph build app.mob</code> 从源码到签名 APK，自动完成全流程。</p>
+      </div>
+      <div class="feature">
+        <div class="num">04</div>
+        <h3>自研编译器</h3>
+        <p>词法、语法、语义分析、代码生成全部自研。不依赖任何第三方 DSL 框架。</p>
+      </div>
+      <div class="feature">
+        <div class="num">05</div>
+        <h3>完整工具链</h3>
+        <p>内置图标生成、文件关联、编译诊断。开箱即用的开发体验。</p>
+      </div>
+      <div class="feature">
+        <div class="num">06</div>
+        <h3>Windows 友好</h3>
+        <p>在 Windows 上完成开发和编译。无需 Mac，无需 Linux。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SYNTAX ==================== -->
+<section id="syntax" class="alt">
+  <div class="container">
+    <h2 class="section-title">语法一览</h2>
+    <p class="section-sub">读完这段代码，你就学会了 Mobph</p>
+
+    <div class="code-wrap">
+<pre><code><span class="tok-com">// 一个带状态、可交互的待办应用</span>
+<span class="tok-kw">app</span> <span class="tok-str">"TodoApp"</span>
+  <span class="tok-kw">icon</span>  <span class="tok-str">"assets/icon.png"</span>
+  <span class="tok-kw">title</span> <span class="tok-str">"我的待办"</span>
+
+<span class="tok-kw">page</span> Home
+  <span class="tok-kw">column</span> fill <span class="tok-num">#F2F2F7</span> padding <span class="tok-num">16</span>
+
+    <span class="tok-kw">text</span> <span class="tok-str">"我的待办"</span> size <span class="tok-num">28</span> bold color <span class="tok-num">#000</span>
+
+    <span class="tok-kw">card</span> fill <span class="tok-num">#FFFFFF</span> radius <span class="tok-num">12</span> padding <span class="tok-num">16</span> shadow <span class="tok-num">4</span>
+      <span class="tok-kw">input</span> <span class="tok-str">"输入新任务"</span> bind task fill <span class="tok-num">#F5F5F5</span> radius <span class="tok-num">8</span>
+      <span class="tok-kw">button</span> <span class="tok-str">"添加"</span> fill <span class="tok-num">#007AFF</span> textColor <span class="tok-num">#FFF</span> radius <span class="tok-num">8</span>
+        <span class="tok-kw">when</span> tapped
+          <span class="tok-kw">toast</span> <span class="tok-str">"已添加：{task}"</span>
+          <span class="tok-kw">set</span> count = count + <span class="tok-num">1</span>
+
+    <span class="tok-kw">switch</span> <span class="tok-str">"接收通知"</span> bind notify
+      <span class="tok-kw">when</span> changed
+        <span class="tok-kw">toast</span> <span class="tok-str">"当前状态：{value}"</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== QUICK START ==================== -->
+<section id="start">
+  <div class="container">
+    <h2 class="section-title">三步开始</h2>
+    <p class="section-sub">Windows · macOS · Linux</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>下载并解压</h3>
+        <p>从<a href="https://wwaoy.lanzoue.com/b0188olr5g" target="_blank" rel="noopener" style="color:var(--red);text-decoration:underline;">下载页面</a>获取 <code>Mobph.zip</code>，解压到任意目录。</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>安装</h3>
+        <p>需要 Python 3.10+。进入目录执行 <code>pip install -e .</code> 完成安装。</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>编译运行</h3>
+        <p>写一个 <code>app.mob</code>，执行 <code>mobph build app.mob</code> 得到 APK。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="container">
+    <div class="brand-mini">
+      <img src="MobIcon.png" alt="Mobph">
+      <span>Mobph</span>
+    </div>
+    <p>移动端应用极简开发语言</p>
+    <p class="copy">© 2026 Mobph. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>
