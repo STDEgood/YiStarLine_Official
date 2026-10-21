@@ -235,6 +235,11 @@
                     </div>
                 </div>
 
+                <div class="box box-warn" style="margin-top: 20px; border-left-color: var(--accent); background: var(--tip-bg);">
+                    <span class="box-title" style="color: var(--accent);">🔑 安装提示：请以管理员身份运行</span>
+                    下载好 <span class="inline-code">.exe</span> 文件后，<strong>请右键点击该文件，选择“以管理员身份运行”</strong>。这能避免因权限不足导致安装失败、快捷方式无法创建等问题。
+                </div>
+
                 <div class="box box-warn" style="margin-top: 20px;">
                     <span class="box-title">⚠️ 防误杀提示</span>
                     由于个人开发者未购买数字签名，Windows Defender 或 360 可能会拦截。请点击“更多信息” -> “仍要运行”。本软件完全开源，请放心使用。
@@ -311,6 +316,12 @@
                 <h1>常见报错排查</h1>
                 
                 <div class="box box-err">
+                    <span class="box-title">❌ 安装失败 / 点击安装没反应</span>
+                    <strong>原因：</strong> 系统权限不足，或者被安全软件静默拦截。<br>
+                    <strong>解决：</strong> 找到下载好的安装包，<strong>右键点击它，选择“以管理员身份运行”</strong>。如果还是没反应，请暂时退出 360 或火绒。
+                </div>
+
+                <div class="box box-err">
                     <span class="box-title">❌ UnsupportedClassVersionError</span>
                     <strong>原因：</strong> Java 版本不匹配。<br>
                     <strong>解决：</strong> 安装 Java 17，并在实例设置中把 Java 路径指向新版本。
@@ -382,7 +393,7 @@
             }
         });
 
-        // 页面切换
+        // 页面切换逻辑
         const navItems = document.querySelectorAll('.nav-item');
         const pages = document.querySelectorAll('.page');
         const breadcrumb = document.getElementById('breadcrumb');
@@ -397,8 +408,13 @@
                 const targetId = item.getAttribute('data-target');
                 document.getElementById(targetId).classList.add('active');
 
+                // 更新面包屑
                 breadcrumb.innerText = item.innerText.replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ]/g, '').trim();
+                
+                // 滚动回顶
                 scrollArea.scrollTop = 0;
+
+                // 移动端收起
                 if(window.innerWidth <= 768) sidebar.classList.remove('mobile-open');
             });
         });
