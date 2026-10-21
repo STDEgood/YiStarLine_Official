@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viskluke Launcher - 官方文档与下载中心</title>
+    <style>
+        /* ================= 主题变量 ================= */
+        :root {
+            --bg-main: #ffffff; --bg-sidebar: #f8f9fa; --bg-card: #ffffff;
+            --text-main: #111827; --text-muted: #4b5563; --accent: #2563eb;
+            --accent-hover: #1d4ed8; --border: #e5e7eb; --code-bg: #f3f4f6;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --warn-bg: #fffbeb; --warn-border: #fcd34d; --tip-bg: #eff6ff; --tip-border: #93c5fd; --err-bg: #fef2f2; --err-border: #fca5a5;
+            --font: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+            --mono: Consolas, monospace;
+        }
+        [data-theme="dark"] {
+            --bg-main: #0f0f11; --bg-sidebar: #141417; --bg-card: #1c1c21;
+            --text-main: #f9fafb; --text-muted: #9ca3af; --accent: #3b82f6;
+            --accent-hover: #60a5fa; --border: #27272a; --code-bg: #18181b;
+            --shadow: 0 4px 12px rgba(0,0,0,0.5);
+            --warn-bg: #422006; --warn-border: #b45309; --tip-bg: #172554; --tip-border: #1e3a8a; --err-bg: #450a0a; --err-border: #b91c1c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font); background: var(--bg-main); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+        a { text-decoration: none; color: var(--accent); }
+        a:hover { text-decoration: underline; }
+        
+        /* ================= 侧边栏 ================= */
+        .sidebar {
+            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; transition: width 0.3s ease, transform 0.3s ease;
+            flex-shrink: 0; z-index: 100;
+        }
+        .sidebar.collapsed { width: 0; border-right: none; overflow: hidden; }
+        
+        .logo-area {
+            height: 64px; padding: 0 24px; display: flex; align-items: center; gap: 12px;
+            font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 900; }
+
+        .nav-menu { list-style: none; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+        .nav-group-title { padding: 16px 12px 6px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .nav-item {
+            padding: 10px 12px; border-radius: 8px; font-size: 14.5px; font-weight: 500;
+            color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; white-space: nowrap;
+        }
+        .nav-item:hover { background: var(--border); color: var(--text-main); }
+        .nav-item.active { background: var(--tip-bg); color: var(--accent); font-weight: 600; }
+
+        /* ================= 主内容区 ================= */
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        .topbar {
+            height: 64px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--bg-main); z-index: 10;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; font-size: 14px; color: var(--text-muted); }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        
+        .btn-icon {
+            background: transparent; border: 1px solid var(--border); color: var(--text-main);
+            width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; font-size: 18px; transition: 0.2s;
+        }
+        .btn-icon:hover { background: var(--border); }
+
+        /* 滚动与页面切换 */
+        .page-scroll { flex: 1; overflow-y: auto; padding: 40px 8%; scroll-behavior: smooth; }
+        .page { display: none; max-width: 900px; margin: 0 auto; animation: fade-in 0.3s ease-out; }
+        .page.active { display: block; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= 通用排版 ================= */
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 24px; border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 8px; }
+        h2 { font-size: 22px; font-weight: 700; margin: 32px 0 16px; }
+        h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--text-main); }
+        p { font-size: 15px; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+        ul, ol { padding-left: 24px; margin-bottom: 20px; color: var(--text-muted); line-height: 1.8; font-size: 15px; }
+        li { margin-bottom: 8px; }
+        strong { color: var(--text-main); }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+        
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-outline:hover { border-color: var(--text-muted); background: var(--border); }
+
+        /* ================= 首页 (Hero) ================= */
+        .hero { text-align: center; padding: 40px 0; }
+        .hero h1 { border: none; font-size: 48px; margin-bottom: 16px; padding: 0; letter-spacing: -1px; background: linear-gradient(90deg, var(--text-main), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; max-width: 600px; margin: 0 auto 32px; color: var(--text-muted); }
+        .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+        .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
+        .feature-item { text-align: center; padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: 0.2s; }
+        .feature-item:hover { border-color: var(--accent); transform: translateY(-4px); }
+        .feature-icon { font-size: 32px; margin-bottom: 16px; }
+        .feature-item h3 { margin: 0 0 8px; }
+        .feature-item p { font-size: 14px; margin: 0; }
+
+        /* ================= 提示与代码 ================= */
+        .box { padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid; font-size: 14.5px; line-height: 1.7; }
+        .box-tip { background: var(--tip-bg); border-color: var(--tip-border); }
+        .box-warn { background: var(--warn-bg); border-color: var(--warn-border); }
+        .box-err { background: var(--err-bg); border-color: var(--err-border); }
+        .box-title { font-weight: 700; margin-bottom: 8px; display: block; }
+
+        .code-box { position: relative; background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
+        .code-content { padding: 16px; font-family: var(--mono); font-size: 13.5px; color: var(--code-text); white-space: pre-wrap; }
+        .btn-copy { position: absolute; top: 8px; right: 8px; background: var(--border); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-copy:hover { background: var(--accent); color: #fff; }
+
+        .inline-code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 13px; color: var(--accent); }
+
+        /* ================= 下载卡片与链接 ================= */
+        .grid-links { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+        .link-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; color: var(--text-main); transition: 0.2s; text-align: center; }
+        .link-card:hover { border-color: var(--accent); color: var(--accent); background: var(--tip-bg); text-decoration: none; }
+        .link-card small { font-weight: normal; font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .tag-primary { display: inline-block; background: var(--accent); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
+        .tag-backup { display: inline-block; background: var(--border); color: var(--text-muted); font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
+        .tag-vpn { display: inline-block; background: var(--warn-bg); color: var(--warn-border); font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; border: 1px solid var(--warn-border); }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .feature-grid { grid-template-columns: 1fr; }
+            .grid-links { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .page-scroll { padding: 24px; }
+            .hero h1 { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon">V</div>
+            Viskluke
+        </div>
+        <ul class="nav-menu">
+            <div class="nav-group-title">产品</div>
+            <li class="nav-item active" data-target="page-home">🏠 概览</li>
+            <li class="nav-item" data-target="page-download">📦 下载启动器</li>
+            
+            <div class="nav-group-title">使用文档</div>
+            <li class="nav-item" data-target="page-java">☕ Java 准备</li>
+            <li class="nav-item" data-target="page-tutorial">🚀 快速上手</li>
+            <li class="nav-item" data-target="page-network">🌐 联机指南</li>
+            
+            <div class="nav-group-title">支持与帮助</div>
+            <li class="nav-item" data-target="page-faq">🛠️ 报错排查</li>
+            <li class="nav-item" data-target="page-ai">🤖 AI 急救站</li>
+        </ul>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="toggle-btn">☰</button>
+                <span>Viskluke / <span id="breadcrumb" style="color: var(--text-main); font-weight: 600;">概览</span></span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-icon" id="theme-btn" title="切换主题">🌙</button>
+            </div>
+        </div>
+
+        <div class="page-scroll" id="page-scroll">
+
+            <!-- ================= 1. 首页 ================= -->
+            <div id="page-home" class="page active">
+                <div class="hero">
+                    <h1>重塑最纯粹的<br>Minecraft 体验</h1>
+                    <p>完全免费开源，专为小白优化的极简启动器。内置内网穿透，告别繁琐的端口映射。</p>
+                    <div class="hero-btns">
+                        <button class="btn btn-primary" onclick="document.querySelector('[data-target=\'page-download\']').click()">立即下载体验</button>
+                        <button class="btn btn-outline" onclick="document.querySelector('[data-target=\'page-tutorial\']').click()">查看使用教程</button>
+                    </div>
+                </div>
+                
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🌐</div>
+                        <h3>零门槛异地联机</h3>
+                        <p>无公网 IP 也能玩，一键内网穿透，把房间号发给朋友即可秒连。彻底告别租服务器和折腾路由器。</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🚀</div>
+                        <h3>全量加载器支持</h3>
+                        <p>Fabric / Forge / NeoForge / Quilt，选好版本点下载，自动静默安装所有前置与依赖。</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>纯净安全无广告</h3>
+                        <p>完全开源，拒绝流氓插件。内置强大的 Java 扫描引擎，无需手动配置环境变量，一键启动。</p>
+                    </div>
+                </div>
+
+                <h2>为什么会有 Viskluke？</h2>
+                <p>因为好用的工具总是因为各种原因被关停。开发者（Ystar）用 <strong>4.6 亿 Token 的 AI 算力</strong>，死磕每一行代码，打磨出了这个终极替代品。我们承诺：永远免费，永远开源，把复杂留给自己，把简单留给你。</p>
+            </div>
+
+            <!-- ================= 2. 下载页 ================= -->
+            <div id="page-download" class="page">
+                <h1>获取启动器</h1>
+                <p>当前版本：v1.0.0 Final Release · 基于 MIT 协议完全开源</p>
+                
+                <div class="grid-links">
+                    <div class="card" style="border-color: var(--accent); margin: 0; display: flex; flex-direction: column;">
+                        <span class="tag-primary">主路线 (推荐)</span>
+                        <h3 style="margin-top: 0;">GitHub 官方下载</h3>
+                        <p style="font-size: 13px;">包含安装版 (exe) 与便携版 (zip)，速度最快，更新最及时。</p>
+                        <a href="https://github.com/STDEgood/Viskluke/releases/latest" target="_blank" class="btn btn-primary" style="width: 100%; margin-top: auto;">前往 GitHub 下载</a>
+                    </div>
+                    <div class="card" style="margin: 0; display: flex; flex-direction: column;">
+                        <span class="tag-backup">备用路线</span>
+                        <h3 style="margin-top: 0;">蓝奏云 国内专线</h3>
+                        <p style="font-size: 13px;">GitHub 打不开时使用。仅包含安装版 (exe)，不包含便携版。</p>
+                        <a href="https://wwaoy.lanzoue.com/b0188ps9vc" target="_blank" class="btn btn-outline" style="width: 100%; margin-top: auto;">前往蓝奏云下载</a>
+                        <div style="margin-top: 12px; font-size: 13px; color: var(--text-muted); text-align: center;">
+                            访问密码：<strong style="font-family: var(--mono); color: var(--accent); font-size: 15px;">6a5f</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box box-warn" style="margin-top: 20px;">
+                    <span class="box-title">⚠️ 防误杀提示</span>
+                    由于个人开发者未购买数字签名，Windows Defender 或 360 可能会拦截。请点击“更多信息” -> “仍要运行”。本软件完全开源，请放心使用。
+                </div>
+            </div>
+
+            <!-- ================= 3. Java 准备 ================= -->
+            <div id="page-java" class="page">
+                <h1>Java 环境准备</h1>
+                <div class="box box-tip">
+                    <span class="box-title">💡 无需手动配置环境变量</span>
+                    Viskluke 内置了强大的 Java 扫描引擎。只要你安装了 Java 17，启动器会自动帮你识别并填入路径，不需要懂命令行。
+                </div>
+
+                <h3>1. 去哪下载 Java 17？</h3>
+                <p>点击直达官方下载页：<a href="https://adoptium.net/zh-CN/temurin/releases/?version=17&os=windows&arch=x64&package=jdk" target="_blank">Adoptium 官方下载 (Windows x64 .msi)</a></p>
+                
+                <h3>2. 怎么安装？</h3>
+                <p>双击下载的 <span class="inline-code">.msi</span> 文件，<strong>一路点击 Next (下一步)</strong>，最后点击 Finish 即可。保持默认设置，不要去改那些看不懂的选项。</p>
+
+                <h3>3. 启动器没识别到怎么办？</h3>
+                <ul>
+                    <li>在启动器实例设置页，点击 <span class="inline-code">Java 路径</span> 旁边的 <strong>“自动检测”</strong>。</li>
+                    <li>若仍失败，手动填入默认路径：<span class="inline-code">C:\Program Files\Eclipse Adoptium\jdk-17.x.x-hotspot\bin\javaw.exe</span></li>
+                </ul>
+            </div>
+
+            <!-- ================= 4. 快速上手 ================= -->
+            <div id="page-tutorial" class="page">
+                <h1>快速上手教程</h1>
+                
+                <h3>第一步：登录账号</h3>
+                <p>打开启动器，点击左上角头像。选择 <strong>离线登录</strong>，输入你想要的英文名（如 Steve），点击确认即可。</p>
+
+                <h3>第二步：下载游戏版本</h3>
+                <ul>
+                    <li>点击左侧菜单 <strong>下载 -> 游戏版本</strong>。</li>
+                    <li>在搜索框输入版本号（如 <span class="inline-code">1.20.4</span>），点击右侧 <strong>创建实例</strong>。</li>
+                </ul>
+
+                <h3>第三步：启动游戏</h3>
+                <p>画面跳回 <strong>游戏</strong> 页后，点击右上角 <strong>启动游戏</strong>。首次启动会自动从官方源下载几百兆的核心文件，请耐心等待进度条跑完。</p>
+
+                <h3>第四步：导入整合包或模组</h3>
+                <p>在 <strong>下载</strong> 页面的 <strong>Mod / 整合包</strong> 标签下，直接搜索你想要的模组名字，点击安装，Viskluke 会自动下载并放入当前选中实例的 `mods` 文件夹。</p>
+            </div>
+
+            <!-- ================= 5. 联机指南 ================= -->
+            <div id="page-network" class="page">
+                <h1>异地联机指南</h1>
+                <p>无需公网 IP，无需折腾路由器端口映射，只需两步即可让异地好友进入你的世界。</p>
+
+                <h3>房主（你）的操作：</h3>
+                <ol>
+                    <li>进入单人游戏，按 <strong>Esc</strong> 键，点击 <strong>对局域网开放</strong>，记下聊天框提示的端口号。</li>
+                    <li>切回启动器，点击左侧 <strong>服务器</strong>。</li>
+                    <li>在下方内网穿透区域，点击 <strong>开隧道</strong>，将生成的房间号发给朋友。</li>
+                </ol>
+
+                <h3>玩家（朋友）的操作：</h3>
+                <ol>
+                    <li>在启动器的 <strong>服务器</strong> 页面，点击 <strong>加入房间</strong>，输入你发的房间号。</li>
+                    <li>打开游戏，进入 <strong>多人游戏</strong>，直接连接地址 <span class="inline-code">127.0.0.1</span> 即可进入。</li>
+                </ol>
+                
+                <div class="box box-tip">
+                    <span class="box-title">💡 进阶提示：开服与专属域名</span>
+                    如果你是服主，可以直接在启动器点击 <strong>启动服务器</strong>。通过 Viskluke Address，填入前缀即可获得类似 <span class="inline-code">myworld.stde.eu.cc</span> 的专属域名，朋友直接用域名直连，免去记 IP 的烦恼。
+                </div>
+            </div>
+
+            <!-- ================= 6. 报错排查 ================= -->
+            <div id="page-faq" class="page">
+                <h1>常见报错排查</h1>
+                
+                <div class="box box-err">
+                    <span class="box-title">❌ UnsupportedClassVersionError</span>
+                    <strong>原因：</strong> Java 版本不匹配。<br>
+                    <strong>解决：</strong> 安装 Java 17，并在实例设置中把 Java 路径指向新版本。
+                </div>
+
+                <div class="box box-err">
+                    <span class="box-title">❌ 文件被占用 / EPERM</span>
+                    <strong>原因：</strong> 杀毒软件拦截写入。<br>
+                    <strong>解决：</strong> 将启动器和游戏目录加入杀毒软件白名单。
+                </div>
+
+                <div class="box box-err">
+                    <span class="box-title">❌ Address already in use</span>
+                    <strong>原因：</strong> 端口被其他程序占用。<br>
+                    <strong>解决：</strong> 在服务器页将端口从 25565 改为 25566。
+                </div>
+
+                <div class="box box-err">
+                    <span class="box-title">❌ 内存不足 / OutOfMemoryError</span>
+                    <strong>原因：</strong> 分配的内存太小，或者装了太多重型模组。<br>
+                    <strong>解决：</strong> 在实例设置里，把最大内存从 2G 调大到 4G 或 6G（取决于你电脑的物理内存）。
+                </div>
+            </div>
+
+            <!-- ================= 7. AI 急救站 ================= -->
+            <div id="page-ai" class="page">
+                <h1>AI 急救站</h1>
+                <p>如果遇到了未知报错，请复制以下模板并填写报错信息，发给 AI，它能帮你解决 99% 的疑难杂症。</p>
+
+                <div class="code-box">
+                    <button class="btn-copy" onclick="copyPrompt()">📋 复制</button>
+                    <div class="code-content" id="ai-prompt">我正在使用 Viskluke Launcher 启动 Minecraft，系统是 Windows。
+游戏版本：[填版本号，如 1.20.4]。
+加载器：[原版/Fabric/Forge]。
+以下是我的报错日志（只贴红色的那一段）：
+[粘贴报错日志]
+
+请用最通俗的语言告诉我：1. 报错原因；2. 具体需要点哪个按钮或修改哪个文件来解决。</div>
+                </div>
+
+                <h3>国内直连 AI（推荐，免翻墙）</h3>
+                <div class="grid-links">
+                    <a href="https://chat.deepseek.com/" target="_blank" class="link-card">DeepSeek <small>逻辑极强，免费</small></a>
+                    <a href="https://kimi.moonshot.cn/" target="_blank" class="link-card">Kimi <small>长文本王者</small></a>
+                    <a href="https://tongyi.aliyun.com/qianwen/" target="_blank" class="link-card">通义千问 <small>阿里出品</small></a>
+                    <a href="https://yiyan.baidu.com/" target="_blank" class="link-card">文心一言 <small>百度出品</small></a>
+                </div>
+
+                <h3 style="margin-top: 32px;">海外顶尖 AI <span class="tag-vpn" style="margin-left: 8px;">⚠️ 需科学上网</span></h3>
+                <div class="grid-links">
+                    <a href="https://chatgpt.com/" target="_blank" class="link-card">ChatGPT <small>需海外网络环境</small></a>
+                    <a href="https://claude.ai/" target="_blank" class="link-card">Claude <small>需海外网络环境</small></a>
+                    <a href="https://gemini.google.com/" target="_blank" class="link-card">Gemini <small>需海外网络环境</small></a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // 侧边栏折叠
+        const toggleBtn = document.getElementById('toggle-btn');
+        const sidebar = document.getElementById('sidebar');
+        toggleBtn.addEventListener('click', () => {
+            if(window.innerWidth <= 768) {
+                sidebar.classList.toggle('mobile-open');
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        });
+
+        // 页面切换
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const scrollArea = document.getElementById('page-scroll');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+
+                pages.forEach(page => page.classList.remove('active'));
+                const targetId = item.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+
+                breadcrumb.innerText = item.innerText.replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ]/g, '').trim();
+                scrollArea.scrollTop = 0;
+                if(window.innerWidth <= 768) sidebar.classList.remove('mobile-open');
+            });
+        });
+
+        // 主题切换
+        const themeBtn = document.getElementById('theme-btn');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        themeBtn.innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+
+        themeBtn.addEventListener('click', () => {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+        });
+
+        // 复制 Prompt
+        function copyPrompt() {
+            const text = document.getElementById('ai-prompt').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 提问模板已复制！请去 AI 网站粘贴。');
+            });
+        }
+    </script>
+</body>
+</html>
