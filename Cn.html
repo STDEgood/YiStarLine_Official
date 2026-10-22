@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Viskluke - 生态级产品宣传片</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --bg: #08080a; /* 极暗底色，衬托UI */
+            --text: #ffffff;
+            --blue: #0071e3;
+            --green: #10b981;
+            --font: -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg); color: var(--text); font-family: var(--font);
+            overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center;
+            perspective: 1500px; /* 3D 空间感 */
+        }
+
+        /* 背景微光 */
+        .ambient-glow {
+            position: absolute; width: 80vw; height: 80vw; top: 10%; left: 10%;
+            background: radial-gradient(circle, rgba(0,113,227,0.1) 0%, transparent 60%);
+            filter: blur(80px); z-index: 0; pointer-events: none;
+        }
+
+        #stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; z-index: 10; }
+
+        .scene {
+            position: absolute; inset: 0;
+            display: flex; justify-content: center; align-items: center;
+            visibility: hidden; opacity: 0;
+        }
+
+        /* ================= 核心排版 ================= */
+        .text-center { text-align: center; z-index: 20; position: relative; }
+        .title { font-size: 6rem; font-weight: 900; letter-spacing: -0.04em; }
+        .subtitle { font-size: 2rem; color: #a1a1aa; margin-top: 10px; font-weight: 500;}
+        .glow-blue { text-shadow: 0 0 30px rgba(0,113,227,0.8); }
+        
+        /* 左右分屏 */
+        .split { display: flex; width: 85%; height: 80%; align-items: center; justify-content: space-between; z-index: 10;}
+        .split-left { width: 40%; }
+        .split-right { width: 55%; position: relative; }
+        
+        /* ================= 高级 UI 窗口 ================= */
+        .ui-window {
+            background: #fff; border-radius: 12px; width: 100%;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+            overflow: hidden; display: flex; flex-direction: column;
+            transform-style: preserve-3d; /* 保留 3D 旋转 */
+        }
+        .ui-header {
+            height: 32px; background: #e5e5ea; display: flex; align-items: center; padding: 0 15px; gap: 8px; flex-shrink: 0;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.r { background: #ff5f56; } .dot.y { background: #ffbd2e; } .dot.g { background: #27c93f; }
+        
+        /* 强制 contain，绝对不裁切图片 */
+        .ui-body { flex: 1; background: #fafafa; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;}
+        .ui-body img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        /* 五大功能环绕文字 */
+        .eco-text {
+            position: absolute; font-size: 1.2rem; font-weight: bold; color: #fff;
+            padding: 8px 16px; background: rgba(0,113,227,0.8); border-radius: 20px;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            opacity: 0; z-index: 50; white-space: nowrap;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    <div id="stage">
+
+        <!-- 1. 开场 -->
+        <div class="scene" id="s1">
+            <div class="text-center">
+                <h1 class="title glow-blue" id="t1" style="font-size: 7rem;">Viskluke</h1>
+                <p class="subtitle" id="t1_sub">重塑你的 Minecraft 体验</p>
+            </div>
+        </div>
+
+        <!-- 2. 主界面 (3D 倾斜砸入) -->
+        <div class="scene" id="s2">
+            <div class="ui-window" style="width: 85%; height: 80%;" id="w2">
+                <div class="ui-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                <div class="ui-body"><img src="1.png" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'padding:50px;font-size:2rem;color:#888\'>[ 主界面 1.png ]</div>'"></div>
+            </div>
+        </div>
+
+        <!-- 3. 登录界面 (左图右文) -->
+        <div class="scene" id="s3">
+            <div class="split">
+                <div class="split-left" style="text-align: left; align-items: flex-start;">
+                    <h1 class="title glow-blue" id="t3" style="font-size: 4.5rem;">极速登录</h1>
+                    <p class="subtitle" id="t3_sub">离线 / 正版 无缝切换<br>自动分配环境</p>
+                </div>
+                <div class="split-right">
+                    <div class="ui-window" id="w3" style="width: 85%; margin-left: auto;">
+                        <div class="ui-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                        <div class="ui-body"><img src="2.png" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'padding:50px;font-size:2rem;color:#888\'>[ 登录 2.png ]</div>'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 生态大爆发 (下载 + 五大金刚) -->
+        <div class="scene" id="s4">
+            <div class="ui-window" style="width: 80%; height: 80%;" id="w4">
+                <div class="ui-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                <div class="ui-body"><img src="3.png" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'padding:50px;font-size:2rem;color:#888\'>[ 下载 3.png ]</div>'"></div>
+            </div>
+            <!-- 环绕文字 -->
+            <div class="eco-text" id="e1" style="top: 10%; left: 10%;">游戏版本</div>
+            <div class="eco-text" id="e2" style="top: 20%; right: 10%;">Mod</div>
+            <div class="eco-text" id="e3" style="bottom: 20%; left: 8%;">资源包</div>
+            <div class="eco-text" id="e4" style="bottom: 10%; right: 12%;">光影</div>
+            <div class="eco-text" id="e5" style="top: 50%; right: 5%;">整合包</div>
+        </div>
+
+        <!-- 5. 开服特写 (暴力推拉) -->
+        <div class="scene" id="s5">
+            <div class="ui-window" style="width: 75%; height: 75%;" id="w5">
+                <div class="ui-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                <div class="ui-body"><img src="4.png" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'padding:50px;font-size:2rem;color:#888\'>[ 开服 4.png ]</div>'"></div>
+            </div>
+            <!-- 压暗遮罩与文字 -->
+            <div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); opacity:0; z-index:30;" id="overlay5"></div>
+            <div class="text-center" style="position:absolute; z-index:40;" id="t5_wrap">
+                <h1 class="title glow-blue" style="color:var(--green);">一键开服</h1>
+                <p class="subtitle">专属域名 · 自动解析</p>
+            </div>
+        </div>
+
+        <!-- 6. 联机穿透 (左文右图) -->
+        <div class="scene" id="s6">
+            <div class="split" style="flex-direction: row-reverse;">
+                <div class="split-left" style="text-align: right; align-items: flex-end;">
+                    <h1 class="title glow-blue" id="t6" style="font-size: 4.5rem;">无界联机</h1>
+                    <p class="subtitle" id="t6_sub">无需第三方工具<br>输入房间号，异地秒连</p>
+                </div>
+                <div class="split-right">
+                    <div class="ui-window" id="w6" style="width: 85%; margin-right: auto;">
+                        <div class="ui-header"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+                        <div class="ui-body"><img src="5.png" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'padding:50px;font-size:2rem;color:#888\'>[ 联机 5.png ]</div>'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. 结尾 -->
+        <div class="scene" id="s7">
+            <div class="text-center">
+                <h1 class="title glow-blue" id="t7" style="font-size: 8rem;">Viskluke</h1>
+                <p class="subtitle" id="t7_sub" style="color: var(--blue); font-weight: bold;">yistarline.icu/Viskluke</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const tl = gsap.timeline();
+
+        // 1. 品牌开场 (3s)
+        tl.set('#s1', { visibility: 'visible', opacity: 1 })
+          .fromTo('#t1', { opacity: 0, scale: 0.8, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1, ease: "power3.out" })
+          .fromTo('#t1_sub', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.6")
+          .to({}, { duration: 1 })
+          .to('#s1', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s1', { visibility: 'hidden' }) });
+
+        // 2. 主界面 3D 砸入 (4s)
+        tl.set('#s2', { visibility: 'visible', opacity: 1 })
+          // 模拟从深空倾斜飞入
+          .fromTo('#w2', 
+            { opacity: 0, y: 200, z: -500, rotateX: 30 }, 
+            { opacity: 1, y: 0, z: 0, rotateX: 0, duration: 1.2, ease: "expo.out" }
+          )
+          // 推镜头，让画面微微放大，有呼吸感
+          .to('#w2', { scale: 1.05, duration: 2, ease: "none" })
+          .to('#s2', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s2', { visibility: 'hidden' }) });
+
+        // 3. 登录分屏 (4s)
+        tl.set('#s3', { visibility: 'visible', opacity: 1 })
+          .fromTo('#t3', { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.6 })
+          .fromTo('#t3_sub', { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.6 }, "-=0.4")
+          .fromTo('#w3', { opacity: 0, x: 100, rotateY: -20 }, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "expo.out" }, "-=0.6")
+          .to({}, { duration: 1.5 })
+          .to('#s3', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s3', { visibility: 'hidden' }) });
+
+        // 4. 生态大爆发 (下载图 + 五大金刚环绕) (5s)
+        tl.set('#s4', { visibility: 'visible', opacity: 1 })
+          .fromTo('#w4', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" })
+          // 五大金刚从不同方向飞出击中屏幕
+          .fromTo('#e1', { opacity: 0, x: -100, y: -100 }, { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "back.out(2)" }, "-=0.3")
+          .fromTo('#e2', { opacity: 0, x: 100, y: -100 }, { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "back.out(2)" }, "-=0.4")
+          .fromTo('#e3', { opacity: 0, x: -100, y: 100 }, { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "back.out(2)" }, "-=0.4")
+          .fromTo('#e4', { opacity: 0, x: 100, y: 100 }, { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "back.out(2)" }, "-=0.4")
+          .fromTo('#e5', { opacity: 0, x: 100, y: 0 }, { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "back.out(2)" }, "-=0.4")
+          .to({}, { duration: 2 }) // 让用户看清五个标签
+          .to('#s4', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s4', { visibility: 'hidden' }) });
+
+        // 5. 开服特写 (暴力推拉) (5s)
+        tl.set('#s5', { visibility: 'visible', opacity: 1 })
+          .fromTo('#w5', { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.6 })
+          // 镜头极速推进 (对准屏幕中心放大)
+          .to('#w5', { scale: 1.15, duration: 1.5, ease: "power2.inOut" }, "+=0.3")
+          .to('#overlay5', { opacity: 1, duration: 0.5 }, "-=1.5") // 背景压暗
+          .fromTo('#t5_wrap', { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.5)" }, "-=1.2")
+          .to({}, { duration: 1.5 })
+          .to('#s5', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s5', { visibility: 'hidden' }) });
+
+        // 6. 联机穿透 (4s)
+        tl.set('#s6', { visibility: 'visible', opacity: 1 })
+          .fromTo('#t6', { opacity: 0, x: 50 }, { opacity: 1, x: 0, duration: 0.6 })
+          .fromTo('#t6_sub', { opacity: 0, x: 50 }, { opacity: 1, x: 0, duration: 0.6 }, "-=0.4")
+          .fromTo('#w6', { opacity: 0, x: -100, rotateY: 20 }, { opacity: 1, x: 0, rotateY: 0, duration: 0.8, ease: "expo.out" }, "-=0.6")
+          .to({}, { duration: 2 })
+          .to('#s6', { opacity: 0, duration: 0.3, onComplete: () => gsap.set('#s6', { visibility: 'hidden' }) });
+
+        // 7. 结尾 (4s)
+        tl.set('#s7', { visibility: 'visible', opacity: 1 })
+          .fromTo('#t7', { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.8, ease: "expo.out" })
+          .fromTo('#t7_sub', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, "-=0.4")
+          .to({}, { duration: 3 });
+
+        // 按 R 键重播
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyR') { tl.restart(); }
+        });
+    </script>
+</body>
+</html>
